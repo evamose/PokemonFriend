@@ -67,31 +67,8 @@
       transition: background-color 0.2s, transform 0.1s;
     }
 
-    .sidebar-save-btn:hover {
-      background-color: #000;
-    }
-
-    .sidebar-save-btn:active {
-      transform: scale(0.98); /* 클릭 시 살짝 눌리는 애니메이션 효과 */
-    }
-
-    /* 🌟 워크스페이스: 캔버스와 버튼을 1200px 폭으로 예쁘게 묶어주는 기둥 역할 */
-    .workspace {
-      display: flex;
-      flex-direction: column;
-      width: 1200px; /* 캔버스와 완전히 동일한 가로 크기 */
-    }
-
-    /* 🌟 캔버스 박스: 회색 배경을 지우고 완벽한 하얀 도화지로 만듦 */
-    .canvas-box {
-      width: 100%;
-      height: 800px; /* 캔버스와 동일한 세로 크기 */
-      background-color: #ffffff; /* 하얀색 캔버스 */
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1); /* 포토샵 캔버스처럼 화면에 떠있는 듯한 그림자 효과 */
-    }
+    .sidebar-save-btn:hover { background-color: #000; }
+    .sidebar-save-btn:active { transform: scale(0.98); } /* 클릭 시 살짝 눌리는 애니메이션 효과 */
 
     /* 아이템 슬롯 및 삭제 버튼 설정 */
     .poke-slot { background: #888; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
@@ -158,7 +135,7 @@
   <!-- 🌟 단색 배경 설정 -->
   <div class="input-group"><label>단색 배경 변경</label><input type="color" id="bg-color-picker" value="#ffffff"></div>
 
-  <!-- 🌟 새 기능: 위로 그라데이션 설정 -->
+  <!-- 🌟 위로 그라데이션 설정 -->
   <div class="input-group">
     <label>위로 그라데이션 (하단 → 상단)</label>
     <div style="display: flex; gap: 5px;">
@@ -170,20 +147,20 @@
 
   <div class="input-group"><label>배경 일러스트 추가</label><input type="file" id="bg-upload" accept="image/*"></div>
 
-  <!-- 🌟 새 기능: 배경 초기화 버튼 -->
+  <!-- 🌟 배경 초기화 버튼 -->
   <button id="reset-bg-btn" style="width: 100%; padding: 10px; background-color: #ff4d4d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">↻ 배경 초기화</button>
 
   <button class="save-btn sidebar-save-btn" onclick="saveAsPNG()">📥 캔버스 저장하기</button>
 </aside>
 
-<!-- 사이드바 3: 레이어 관리 (기존과 동일) -->
+<!-- 사이드바 3: 레이어 관리 -->
 <aside id="sidebar3" class="sidebar sidebar-3">
   <h3 style="margin-top:0;">레이어 (위아래 조절)</h3>
   <p style="font-size:12px; color:#ddd; margin-top:-10px;">항목을 마우스로 끌어 순서를 변경하세요.</p>
   <div id="layer-list"></div>
 </aside>
 
-<!-- 🌟 메인 화면 (저장 버튼이 제거됨) -->
+<!-- 🌟 메인 화면 -->
 <main class="main-canvas-wrapper">
   <div class="workspace">
     <div class="canvas-box" id="canvas-container">
@@ -194,7 +171,6 @@
 
 <!-- 팝업창 -->
 <div id="pokemonModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
-  <!-- 기존 모달 내용 (동일) -->
   <div class="modal-content">
     <span class="modal-close" onclick="closeModal()">✕</span>
     <div class="search-container">
@@ -214,7 +190,6 @@
   window.onload = function() {
     const container = document.getElementById('canvas-container');
 
-    // 고정 숫자(1200) 대신, 현재 박스의 크기를 측정해서 캔버스 생성
     canvas = new fabric.Canvas('mainCanvas', {
       width: container.clientWidth,
       height: container.clientHeight,
@@ -223,7 +198,6 @@
 
     canvas.imageSmoothingEnabled = true;
 
-    // 🌟 인터넷 창 크기를 마우스로 줄이거나 늘릴 때, 캔버스 크기도 실시간으로 맞춰서 변함
     window.addEventListener('resize', () => {
       canvas.setWidth(container.clientWidth);
       canvas.setHeight(container.clientHeight);
@@ -231,57 +205,84 @@
     });
 
     setupLayerDragAndDrop();
+
+    // --- 🌟 추가됨: 마우스 휠로 줌인/줌아웃 및 화면 이동 ---
+    canvas.on('mouse:wheel', function(opt) {
+      var delta = opt.e.deltaY;
+      var zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 10) zoom = 10;
+      if (zoom < 0.1) zoom = 0.1;
+      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
+
+    canvas.on('mouse:down', function(opt) {
+      var evt = opt.e;
+      // 빈 배경 클릭 시 이동 모드 켜기
+      if (!opt.target || evt.altKey === true) {
+        this.isDragging = true;
+        this.selection = false;
+        this.lastPosX = evt.clientX;
+        this.lastPosY = evt.clientY;
+      }
+    });
+
+    canvas.on('mouse:move', function(opt) {
+      if (this.isDragging) {
+        var e = opt.e;
+        var vpt = this.viewportTransform;
+        vpt[4] += e.clientX - this.lastPosX;
+        vpt[5] += e.clientY - this.lastPosY;
+        this.requestRenderAll();
+        this.lastPosX = e.clientX;
+        this.lastPosY = e.clientY;
+      }
+    });
+
+    canvas.on('mouse:up', function(opt) {
+      this.setViewportTransform(this.viewportTransform);
+      this.isDragging = false;
+      this.selection = true;
+    });
   };
 
-  // --- 🌟 배경 컨트롤 (단색, 그라데이션, 초기화) ---
-
-  // 1. 단색 배경 변경
+  // --- 🌟 배경 컨트롤 ---
   document.getElementById('bg-color-picker').addEventListener('input', function(e) {
-    canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas)); // 기존 배경 이미지 제거
+    canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
     canvas.backgroundColor = e.target.value;
     canvas.renderAll();
   });
 
-  // 2. 위로 그라데이션 적용 (수정됨: 안정적인 픽셀 좌표 사용)
   document.getElementById('apply-grad-btn').addEventListener('click', function() {
     const colorBottom = document.getElementById('grad-color-bottom').value;
     const colorTop = document.getElementById('grad-color-top').value;
 
-    // Fabric.js 그라데이션 객체 생성 (픽셀 단위로 캔버스 크기에 딱 맞춤)
     const gradient = new fabric.Gradient({
       type: 'linear',
-      gradientUnits: 'pixels', // percentage 대신 pixels 사용
-      coords: {
-        x1: 0,
-        y1: canvas.height, // 시작점: 캔버스의 맨 아래 (예: 800)
-        x2: 0,
-        y2: 0              // 끝점: 캔버스의 맨 위 (0)
-      },
+      gradientUnits: 'pixels',
+      coords: { x1: 0, y1: canvas.height, x2: 0, y2: 0 },
       colorStops: [
-        { offset: 0, color: colorBottom }, // 하단 색상
-        { offset: 1, color: colorTop }     // 상단 색상
+        { offset: 0, color: colorBottom },
+        { offset: 1, color: colorTop }
       ]
     });
 
-    // 기존 배경 이미지가 있다면 제거하고 그라데이션 적용
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
     canvas.backgroundColor = gradient;
     canvas.renderAll();
   });
 
-  // 3. 배경 초기화 (완전한 하얀색으로 되돌리기)
   document.getElementById('reset-bg-btn').addEventListener('click', function() {
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
     canvas.backgroundColor = '#ffffff';
-
-    // 입력 폼들도 초기 상태로 리셋
     document.getElementById('bg-color-picker').value = '#ffffff';
     document.getElementById('bg-upload').value = '';
-
     canvas.renderAll();
   });
 
-  // --- 기존 UI 제어 및 사전 로직 (동일) ---
+  // --- 기존 UI 제어 및 사전 로직 ---
   function toggleSidebar(id) { document.getElementById(id).classList.toggle('active'); document.querySelectorAll('.sidebar').forEach(sb => { if(sb.id !== id) sb.classList.remove('active'); }); }
   function openModal() { document.getElementById('pokemonModal').classList.add('active'); document.getElementById('searchInput').focus(); }
   function closeModal() { document.getElementById('pokemonModal').classList.remove('active'); document.getElementById('searchInput').value = ''; document.getElementById('autocompleteList').style.display = 'none'; document.getElementById('searchResults').innerHTML = ''; }
@@ -338,19 +339,14 @@
     } catch (error) { searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지를 불러오지 못했습니다.</div>'; }
   }
 
-  // --- 🌟 캔버스에 포켓몬 추가 (여백 제거 적용) ---
+  // --- 🌟 캔버스에 포켓몬 추가 ---
   function addPokemonToMain(name, heightCm, imgUrl) {
     closeModal();
     const objId = 'obj_' + Date.now();
-    const targetPixelHeight = heightCm * 3.5; // 1cm = 3.5px 비율 유지
+    const targetPixelHeight = heightCm * 3.5;
 
-    // 1. 투명 여백을 먼저 싹둑 자릅니다.
     trimTransparentPixels(imgUrl, function(trimmedImgUrl) {
-
-      // 2. 여백이 잘려나간 진짜 캐릭터 이미지를 캔버스에 올립니다.
       fabric.Image.fromURL(trimmedImgUrl, function(img) {
-
-        // 🌟 이제 img.height는 머리끝부터 발끝까지의 정확한 높이입니다!
         const scale = targetPixelHeight / img.height;
 
         img.set({
@@ -358,7 +354,8 @@
           left: (canvas.width / 2) - ((img.width * scale) / 2),
           top: (canvas.height / 2) - ((img.height * scale) / 2),
           scaleX: scale, scaleY: scale,
-          transparentCorners: false, cornerColor: '#555', cornerSize: 10
+          transparentCorners: false, cornerColor: '#555', cornerSize: 10,
+          objectCaching: false // 화질 깨짐 방지
         });
 
         canvas.add(img);
@@ -370,12 +367,62 @@
     });
   }
 
-  // --- 🌟 새 기능: UI에 목록 추가 및 삭제(-) 버튼 연동 ---
+  // --- 🌟 추가됨: 누락되었던 캐릭터 파일 업로드 (보안 충돌 우회) ---
+  document.getElementById('char-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const nameInput = document.getElementById('char-name').value;
+    const displayName = nameInput ? nameInput : '내 캐릭터';
+    const heightInput = document.getElementById('char-height').value;
+    const charHeightCm = heightInput ? parseFloat(heightInput) : 180;
+
+    const targetPixelHeight = charHeightCm * 3.5;
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+      const imgData = event.target.result;
+      const objId = 'obj_' + Date.now();
+
+      // 내 파일은 여백 제거기(trim)를 통과하지 않고 바로 캔버스에 추가 (오류 방지)
+      fabric.Image.fromURL(imgData, function(img) {
+        if (!img) {
+          alert("이미지를 캔버스에 불러오지 못했습니다.");
+          return;
+        }
+
+        const scale = targetPixelHeight / img.height;
+
+        img.set({
+          id: objId,
+          left: (canvas.width / 2) - ((img.width * scale) / 2),
+          top: (canvas.height / 2) - ((img.height * scale) / 2),
+          scaleX: scale,
+          scaleY: scale,
+          transparentCorners: false,
+          cornerColor: '#555',
+          cornerSize: 10,
+          objectCaching: false // 화질 깨짐 방지
+        });
+
+        canvas.add(img);
+        canvas.setActiveObject(img);
+
+        addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, imgData, objId);
+        addLayerToSidebar(displayName, objId);
+      });
+    };
+
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  });
+
+  // --- UI 및 레이어 연동 ---
   function addPokemonToSidebar(name, imgUrl, objId) {
     const list = document.getElementById('selected-pokemon-list');
     const slot = document.createElement('div');
     slot.className = 'poke-slot';
-    slot.dataset.id = objId; // ID 저장
+    slot.dataset.id = objId;
     slot.innerHTML = `
                 <img src="${imgUrl}" style="width:40px; height:40px; background:#fff; border-radius:5px; margin-right:10px; object-fit:contain;">
                 <div><div style="font-size:16px; font-weight:bold;">${name}</div></div>
@@ -388,36 +435,24 @@
     const list = document.getElementById('layer-list');
     const layer = document.createElement('div');
     layer.className = 'layer-item';
-    layer.dataset.id = objId; // ID 저장
-    layer.draggable = true; // 🌟 드래그 가능 속성 추가
+    layer.dataset.id = objId;
+    layer.draggable = true;
     layer.innerHTML = `<span>≡</span> <span style="margin-left:10px;">${name}</span>`;
-
-    // 맨 위에 추가
     list.insertBefore(layer, list.firstChild);
-
-    // 드래그 이벤트 연결
     addDragEventsToItem(layer);
   }
 
-  // --- 🌟 새 기능: 객체 삭제 함수 ---
   function removeObject(objId) {
-    // 1. 캔버스에서 삭제
     const objToRemove = canvas.getObjects().find(o => o.id === objId);
     if (objToRemove) canvas.remove(objToRemove);
-
-    // 2. 포켓몬 목록에서 삭제
     const slot = document.querySelector(`.poke-slot[data-id="${objId}"]`);
     if (slot) slot.remove();
-
-    // 3. 레이어 목록에서 삭제
     const layer = document.querySelector(`.layer-item[data-id="${objId}"]`);
     if (layer) layer.remove();
   }
 
-  // --- 🌟 새 기능: 레이어 드래그 앤 드롭 및 z-index 연동 ---
   function setupLayerDragAndDrop() {
     const list = document.getElementById('layer-list');
-
     list.addEventListener('dragover', e => {
       e.preventDefault();
       const afterElement = getDragAfterElement(list, e.clientY);
@@ -433,13 +468,8 @@
   }
 
   function addDragEventsToItem(item) {
-    item.addEventListener('dragstart', () => {
-      item.classList.add('dragging');
-    });
-    item.addEventListener('dragend', () => {
-      item.classList.remove('dragging');
-      syncLayersToCanvas(); // 🌟 드래그가 끝나면 캔버스 z-index 동기화
-    });
+    item.addEventListener('dragstart', () => { item.classList.add('dragging'); });
+    item.addEventListener('dragend', () => { item.classList.remove('dragging'); syncLayersToCanvas(); });
   }
 
   function getDragAfterElement(container, y) {
@@ -455,44 +485,36 @@
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   }
 
-  // HTML의 레이어 순서(위가 맨 앞)에 맞춰 캔버스 객체의 z-index 재정렬
   function syncLayersToCanvas() {
-    // DOM은 위에서 아래로(Top -> Bottom), 캔버스 z-index는 낮을수록 뒤(Bottom -> Top)이므로 배열을 뒤집습니다.
     const items = [...document.querySelectorAll('#layer-list .layer-item')].reverse();
-
     items.forEach((item, index) => {
       const objId = item.dataset.id;
       const obj = canvas.getObjects().find(o => o.id === objId);
-      if (obj) {
-        obj.moveTo(index); // Fabric.js의 z-index 변경 메서드
-      }
+      if (obj) obj.moveTo(index);
     });
     canvas.renderAll();
   }
 
-  // --- 🌟 수정된 PNG 저장하기 기능 (고화질 옵션 추가) ---
+  // --- PNG 저장하기 기능 ---
   function saveAsPNG() {
     canvas.discardActiveObject();
     canvas.renderAll();
 
     const link = document.createElement('a');
     link.download = '포켓몬_크기비교.png';
-
-    // 🌟 multiplier 옵션을 2로 설정하면 가로세로 픽셀이 2배로 뻥튀기되어 아주 선명하게 저장됩니다! (원하면 3으로 올려도 됩니다)
     link.href = canvas.toDataURL({
       format: 'png',
-      multiplier: 2
+      multiplier: 2 // 고화질 저장 유지
     });
-
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
-  // --- 🌟 마법의 함수: 이미지의 투명한 여백을 완벽히 잘라내는 함수 ---
+  // --- 투명 여백 자르기 함수 ---
   function trimTransparentPixels(imgUrl, callback) {
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // CORS 에러 방지
+    img.crossOrigin = 'anonymous';
     img.onload = function() {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = img.width;
@@ -500,13 +522,10 @@
       const ctx = tempCanvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
-      // 이미지의 모든 픽셀 데이터(RGBA)를 가져옵니다.
       const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
       const data = imageData.data;
-
       let top = null, bottom = null, left = null, right = null;
 
-      // 투명하지 않은(알파값이 0보다 큰) 진짜 픽셀들의 상하좌우 끝점을 찾습니다.
       for (let y = 0; y < tempCanvas.height; y++) {
         for (let x = 0; x < tempCanvas.width; x++) {
           const alpha = data[(y * tempCanvas.width + x) * 4 + 3];
@@ -519,7 +538,6 @@
         }
       }
 
-      // 투명한 이미지가 아니라면, 찾은 끝점만큼만 잘라내어 새로운 이미지를 만듭니다.
       if (top !== null) {
         const trimmedWidth = right - left + 1;
         const trimmedHeight = bottom - top + 1;
@@ -531,12 +549,13 @@
         );
         callback(trimmedCanvas.toDataURL('image/png'));
       } else {
-        callback(imgUrl); // 에러 대비 원본 반환
+        callback(imgUrl);
       }
     };
     img.src = imgUrl;
   }
-  // --- 🌟 새 기능: 배경 일러스트 파일 업로드 ---
+
+  // --- 배경 일러스트 파일 업로드 ---
   document.getElementById('bg-upload').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -546,19 +565,16 @@
       const imgData = event.target.result;
 
       fabric.Image.fromURL(imgData, function(img) {
-        // 배경 이미지가 캔버스를 꽉 채우도록 비율(Scale) 계산
         const canvasRatio = canvas.width / canvas.height;
         const imgRatio = img.width / img.height;
         let scale = 1;
 
-        // 캔버스가 이미지보다 가로로 더 길면 가로에 맞추고, 세로로 더 길면 세로에 맞춤
         if (canvasRatio > imgRatio) {
           scale = canvas.width / img.width;
         } else {
           scale = canvas.height / img.height;
         }
 
-        // 캔버스 배경으로 설정
         canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
           scaleX: scale,
           scaleY: scale,
@@ -570,8 +586,6 @@
       });
     };
     reader.readAsDataURL(file);
-
-    // 파일 선택 창 초기화 (같은 배경 다시 선택 가능하도록)
     e.target.value = '';
   });
 </script>
