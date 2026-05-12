@@ -21,62 +21,22 @@
     .sidebar-2 { background-color: #9e9e9e; color: #111; }
     .sidebar-3 { background-color: #555555; color: white; }
 
-    /* 🌟 전체 메인 영역: 스크롤바 완전 제거 (hidden) */
-    .main-canvas-wrapper {
-      flex-grow: 1;
-      padding: 20px 40px 20px 20px;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      overflow: hidden; /* 스크롤이 절대 생기지 않도록 차단 */
-      z-index: 1;
-    }
+    /* 메인 화면 및 워크스페이스 */
+    .main-canvas-wrapper { flex-grow: 1; padding: 20px 40px 20px 20px; display: flex; justify-content: flex-end; align-items: center; overflow: hidden; z-index: 1; }
+    .workspace { display: flex; flex-direction: column; width: calc(100vw - 430px); height: 100%; }
+    .canvas-box { width: 100%; height: 100%; background-color: #ffffff; border-radius: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
 
-    /* 🌟 워크스페이스: 사이드바(370px)와 좌우 여백을 뺀 나머지 공간을 꽉 채움 */
-    .workspace {
-      display: flex;
-      flex-direction: column;
-      width: calc(100vw - 430px); /* 화면 크기에서 사이드바 영역만큼 빼기 */
-      height: 100%; /* 위아래로도 꽉 채우기 */
-    }
-
-    /* 🌟 캔버스 박스: 부모인 워크스페이스의 크기를 100% 따라감 */
-    .canvas-box {
-      width: 100%;
-      height: 100%;
-      background-color: #ffffff;
-      border-radius: 10px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-
-    /* 🌟 사이드바 내부로 들어간 저장 버튼을 위한 새로운 스타일 */
-    .sidebar-save-btn {
-      width: 100%; /* 사이드바 가로 길이에 꽉 차게 */
-      margin-top: 10px;
-      padding: 15px;
-      background-color: #333; /* 사이드바에 어울리는 세련된 다크그레이 */
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 16px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-      transition: background-color 0.2s, transform 0.1s;
-    }
-
+    /* 사이드바 저장 버튼 */
+    .sidebar-save-btn { width: 100%; margin-top: 10px; padding: 15px; background-color: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: background-color 0.2s, transform 0.1s; }
     .sidebar-save-btn:hover { background-color: #000; }
-    .sidebar-save-btn:active { transform: scale(0.98); } /* 클릭 시 살짝 눌리는 애니메이션 효과 */
+    .sidebar-save-btn:active { transform: scale(0.98); }
 
-    /* 아이템 슬롯 및 삭제 버튼 설정 */
+    /* 아이템 슬롯 및 레이어 */
     .poke-slot { background: #888; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
     .poke-slot.empty { background: #ccc; color: #555; justify-content: center; font-weight: bold; border: 2px dashed #999; cursor: pointer; padding: 15px;}
     .remove-btn { margin-left: auto; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background 0.2s;}
     .remove-btn:hover { background: #e60000; }
 
-    /* 레이어 아이템 드래그 설정 */
     .layer-item { background: #e2e2e2; color: #333; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; cursor: grab; transition: background 0.2s; }
     .layer-item:active { cursor: grabbing; }
     .layer-item.dragging { opacity: 0.5; background: #c0c0c0; }
@@ -86,7 +46,7 @@
     .input-group input { width: 100%; padding: 8px; box-sizing: border-box; border: none; border-radius: 5px; }
     .input-group input[type="color"] { padding: 0; height: 35px; cursor: pointer; }
 
-    /* 모달 및 검색 */
+    /* 검색 및 팝업 모달 */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 10vh; }
     .modal-overlay.active { display: flex; }
     .modal-content { background: #f4f4f4; width: 600px; padding: 30px; padding-top: 55px; border-radius: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
@@ -96,8 +56,10 @@
     .search-container { position: relative; width: 100%; }
     .search-bar { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; outline: none; }
     .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; max-height: 250px; overflow-y: auto; z-index: 1000; margin: 0; padding: 0; list-style: none; border-radius: 0 0 5px 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+
+    /* 🌟 마우스 호버 및 키보드 선택(active) 시 동일한 하이라이트 효과 */
     .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 15px; }
-    .autocomplete-item:hover { background: #f0f0f0; }
+    .autocomplete-item:hover, .autocomplete-item.active { background: #e0e0e0; font-weight: bold; border-left: 4px solid #333; padding-left: 11px; }
 
     .search-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; }
     .result-item { background: white; border-radius: 10px; padding: 10px; display: flex; align-items: center; cursor: pointer; border: 1px solid #ddd; transition: transform 0.1s; }
@@ -117,14 +79,14 @@
   <button class="tab tab-3" onclick="toggleSidebar('sidebar3')"></button>
 </nav>
 
-<!-- 사이드바 1: 포켓몬 목록 -->
+<!-- 사이드바 1 -->
 <aside id="sidebar1" class="sidebar sidebar-1">
   <h3>포켓몬 목록</h3>
   <div class="poke-slot empty" onclick="openModal()">+ 포켓몬 추가</div>
   <div id="selected-pokemon-list"></div>
 </aside>
 
-<!-- 사이드바 2: 캐릭터 설정 -->
+<!-- 사이드바 2 -->
 <aside id="sidebar2" class="sidebar sidebar-2">
   <div class="input-group"><label>캐릭터 이름</label><input type="text" id="char-name" placeholder="이름 입력 (예: 내 캐릭터)"></div>
   <div class="input-group"><label>캐릭터 키 (cm)</label><input type="number" id="char-height" placeholder="예: 180"></div>
@@ -132,10 +94,7 @@
 
   <hr style="border: 0; border-top: 1px solid #777; margin: 20px 0;">
 
-  <!-- 🌟 단색 배경 설정 -->
   <div class="input-group"><label>단색 배경 변경</label><input type="color" id="bg-color-picker" value="#ffffff"></div>
-
-  <!-- 🌟 위로 그라데이션 설정 -->
   <div class="input-group">
     <label>위로 그라데이션 (하단 → 상단)</label>
     <div style="display: flex; gap: 5px;">
@@ -144,23 +103,19 @@
       <button id="apply-grad-btn" style="flex-grow:1; cursor:pointer; background:#555; color:white; border:none; border-radius:5px; font-weight:bold;">적용</button>
     </div>
   </div>
-
   <div class="input-group"><label>배경 일러스트 추가</label><input type="file" id="bg-upload" accept="image/*"></div>
 
-  <!-- 🌟 배경 초기화 버튼 -->
   <button id="reset-bg-btn" style="width: 100%; padding: 10px; background-color: #ff4d4d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">↻ 배경 초기화</button>
-
   <button class="save-btn sidebar-save-btn" onclick="saveAsPNG()">📥 캔버스 저장하기</button>
 </aside>
 
-<!-- 사이드바 3: 레이어 관리 -->
+<!-- 사이드바 3 -->
 <aside id="sidebar3" class="sidebar sidebar-3">
   <h3 style="margin-top:0;">레이어 (위아래 조절)</h3>
   <p style="font-size:12px; color:#ddd; margin-top:-10px;">항목을 마우스로 끌어 순서를 변경하세요.</p>
   <div id="layer-list"></div>
 </aside>
 
-<!-- 🌟 메인 화면 -->
 <main class="main-canvas-wrapper">
   <div class="workspace">
     <div class="canvas-box" id="canvas-container">
@@ -169,7 +124,7 @@
   </div>
 </main>
 
-<!-- 팝업창 -->
+<!-- 모달창 -->
 <div id="pokemonModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
   <div class="modal-content">
     <span class="modal-close" onclick="closeModal()">✕</span>
@@ -186,7 +141,6 @@
 <script>
   let canvas;
 
-  // --- 0. 🌟 Fabric.js 캔버스 자동 크기 초기화 ---
   window.onload = function() {
     const container = document.getElementById('canvas-container');
 
@@ -206,7 +160,7 @@
 
     setupLayerDragAndDrop();
 
-    // --- 🌟 추가됨: 마우스 휠로 줌인/줌아웃 및 화면 이동 ---
+    // 마우스 휠로 줌인/줌아웃 및 화면 이동
     canvas.on('mouse:wheel', function(opt) {
       var delta = opt.e.deltaY;
       var zoom = canvas.getZoom();
@@ -220,7 +174,6 @@
 
     canvas.on('mouse:down', function(opt) {
       var evt = opt.e;
-      // 빈 배경 클릭 시 이동 모드 켜기
       if (!opt.target || evt.altKey === true) {
         this.isDragging = true;
         this.selection = false;
@@ -248,7 +201,71 @@
     });
   };
 
-  // --- 🌟 배경 컨트롤 ---
+  // --- 초고화질 캐릭터 파일 업로드 ---
+  document.getElementById('char-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const nameInput = document.getElementById('char-name').value;
+    const displayName = nameInput ? nameInput : '내 캐릭터';
+    const heightInput = document.getElementById('char-height').value;
+    const charHeightCm = heightInput ? parseFloat(heightInput) : 180;
+
+    const targetPixelHeight = charHeightCm * 3.5;
+    const objectUrl = URL.createObjectURL(file);
+    const objId = 'obj_' + Date.now();
+
+    fabric.Image.fromURL(objectUrl, function(img) {
+      if (!img) { alert("이미지를 캔버스에 불러오지 못했습니다."); return; }
+
+      const scale = targetPixelHeight / img.height;
+
+      img.set({
+        id: objId,
+        left: (canvas.width / 2) - ((img.width * scale) / 2),
+        top: (canvas.height / 2) - ((img.height * scale) / 2),
+        scaleX: scale, scaleY: scale,
+        transparentCorners: false, cornerColor: '#555', cornerSize: 10,
+        objectCaching: false
+      });
+
+      canvas.add(img);
+      canvas.setActiveObject(img);
+
+      addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, objectUrl, objId);
+      addLayerToSidebar(displayName, objId);
+    });
+    e.target.value = '';
+  });
+
+  // --- 고해상도 배경 이미지 추가 ---
+  document.getElementById('bg-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const objectUrl = URL.createObjectURL(file);
+
+    fabric.Image.fromURL(objectUrl, function(img) {
+      if(!img) return;
+      const canvasRatio = canvas.width / canvas.height;
+      const imgRatio = img.width / img.height;
+      let scale = 1;
+
+      if (canvasRatio > imgRatio) {
+        scale = canvas.width / img.width;
+      } else {
+        scale = canvas.height / img.height;
+      }
+
+      canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+        scaleX: scale, scaleY: scale,
+        originX: 'left', originY: 'top', left: 0, top: 0
+      });
+    });
+    e.target.value = '';
+  });
+
+  // --- 배경 컨트롤 ---
   document.getElementById('bg-color-picker').addEventListener('input', function(e) {
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
     canvas.backgroundColor = e.target.value;
@@ -260,13 +277,9 @@
     const colorTop = document.getElementById('grad-color-top').value;
 
     const gradient = new fabric.Gradient({
-      type: 'linear',
-      gradientUnits: 'pixels',
+      type: 'linear', gradientUnits: 'pixels',
       coords: { x1: 0, y1: canvas.height, x2: 0, y2: 0 },
-      colorStops: [
-        { offset: 0, color: colorBottom },
-        { offset: 1, color: colorTop }
-      ]
+      colorStops: [ { offset: 0, color: colorBottom }, { offset: 1, color: colorTop } ]
     });
 
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
@@ -282,7 +295,7 @@
     canvas.renderAll();
   });
 
-  // --- 기존 UI 제어 및 사전 로직 ---
+  // --- UI 제어 ---
   function toggleSidebar(id) { document.getElementById(id).classList.toggle('active'); document.querySelectorAll('.sidebar').forEach(sb => { if(sb.id !== id) sb.classList.remove('active'); }); }
   function openModal() { document.getElementById('pokemonModal').classList.add('active'); document.getElementById('searchInput').focus(); }
   function closeModal() { document.getElementById('pokemonModal').classList.remove('active'); document.getElementById('searchInput').value = ''; document.getElementById('autocompleteList').style.display = 'none'; document.getElementById('searchResults').innerHTML = ''; }
@@ -304,7 +317,13 @@
 
   const searchInput = document.getElementById('searchInput');
   const autocompleteList = document.getElementById('autocompleteList');
+
+  // 🌟 키보드 이동을 위한 변수 추가
+  let currentFocus = -1;
+
   searchInput.addEventListener('input', (e) => {
+    currentFocus = -1; // 🌟 입력이 바뀔 때마다 포커스 초기화
+
     const query = e.target.value.trim();
     autocompleteList.innerHTML = '';
     if (!query) { autocompleteList.style.display = 'none'; return; }
@@ -321,6 +340,45 @@
     } else { autocompleteList.style.display = 'none'; }
   });
 
+  // 🌟 새 기능: 키보드 방향키 및 엔터 지원 로직
+  searchInput.addEventListener('keydown', function(e) {
+    let items = autocompleteList.getElementsByTagName('li');
+    if (autocompleteList.style.display === 'none' || items.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      currentFocus++;
+      addActive(items);
+    } else if (e.key === 'ArrowUp') {
+      currentFocus--;
+      addActive(items);
+    } else if (e.key === 'Enter') {
+      e.preventDefault(); // 엔터 시 폼 제출 등 기본 동작 방지
+      if (currentFocus > -1) {
+        if (items[currentFocus]) items[currentFocus].click();
+      } else if (items.length > 0) {
+        items[0].click(); // 선택 안 하고 엔터 치면 무조건 첫 번째 항목 클릭
+      }
+    }
+  });
+
+  function addActive(items) {
+    if (!items) return false;
+    removeActive(items);
+    if (currentFocus >= items.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (items.length - 1);
+
+    items[currentFocus].classList.add('active');
+
+    // 방향키 이동 시 스크롤 자동 추적
+    items[currentFocus].scrollIntoView({ block: 'nearest' });
+  }
+
+  function removeActive(items) {
+    for (let i = 0; i < items.length; i++) {
+      items[i].classList.remove('active');
+    }
+  }
+
   async function fetchAndShowPokemon(id, koreanName) {
     const searchResults = document.getElementById('searchResults');
     searchResults.innerHTML = '<div class="loading-text">포켓몬 이미지를 불러오는 중입니다...</div>';
@@ -331,15 +389,14 @@
       const imageUrl = data.sprites.other['official-artwork'].front_default;
 
       searchResults.innerHTML = `
-                    <div class="result-item" onclick="addPokemonToMain('${koreanName}', ${heightCm}, '${imageUrl}')">
-                        <img src="${imageUrl}" alt="${koreanName}" class="result-img">
-                        <div class="result-info"><div class="result-name">${koreanName}</div><div class="result-height">설정 키: ${heightCm}cm</div></div>
-                    </div>
-                `;
+        <div class="result-item" onclick="addPokemonToMain('${koreanName}', ${heightCm}, '${imageUrl}')">
+            <img src="${imageUrl}" alt="${koreanName}" class="result-img">
+            <div class="result-info"><div class="result-name">${koreanName}</div><div class="result-height">설정 키: ${heightCm}cm</div></div>
+        </div>
+      `;
     } catch (error) { searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지를 불러오지 못했습니다.</div>'; }
   }
 
-  // --- 🌟 캔버스에 포켓몬 추가 ---
   function addPokemonToMain(name, heightCm, imgUrl) {
     closeModal();
     const objId = 'obj_' + Date.now();
@@ -348,14 +405,13 @@
     trimTransparentPixels(imgUrl, function(trimmedImgUrl) {
       fabric.Image.fromURL(trimmedImgUrl, function(img) {
         const scale = targetPixelHeight / img.height;
-
         img.set({
           id: objId,
           left: (canvas.width / 2) - ((img.width * scale) / 2),
           top: (canvas.height / 2) - ((img.height * scale) / 2),
           scaleX: scale, scaleY: scale,
           transparentCorners: false, cornerColor: '#555', cornerSize: 10,
-          objectCaching: false // 화질 깨짐 방지
+          objectCaching: false
         });
 
         canvas.add(img);
@@ -367,67 +423,17 @@
     });
   }
 
-  // --- 🌟 추가됨: 누락되었던 캐릭터 파일 업로드 (보안 충돌 우회) ---
-  document.getElementById('char-upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const nameInput = document.getElementById('char-name').value;
-    const displayName = nameInput ? nameInput : '내 캐릭터';
-    const heightInput = document.getElementById('char-height').value;
-    const charHeightCm = heightInput ? parseFloat(heightInput) : 180;
-
-    const targetPixelHeight = charHeightCm * 3.5;
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-      const imgData = event.target.result;
-      const objId = 'obj_' + Date.now();
-
-      // 내 파일은 여백 제거기(trim)를 통과하지 않고 바로 캔버스에 추가 (오류 방지)
-      fabric.Image.fromURL(imgData, function(img) {
-        if (!img) {
-          alert("이미지를 캔버스에 불러오지 못했습니다.");
-          return;
-        }
-
-        const scale = targetPixelHeight / img.height;
-
-        img.set({
-          id: objId,
-          left: (canvas.width / 2) - ((img.width * scale) / 2),
-          top: (canvas.height / 2) - ((img.height * scale) / 2),
-          scaleX: scale,
-          scaleY: scale,
-          transparentCorners: false,
-          cornerColor: '#555',
-          cornerSize: 10,
-          objectCaching: false // 화질 깨짐 방지
-        });
-
-        canvas.add(img);
-        canvas.setActiveObject(img);
-
-        addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, imgData, objId);
-        addLayerToSidebar(displayName, objId);
-      });
-    };
-
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  });
-
-  // --- UI 및 레이어 연동 ---
+  // UI 리스트, 드래그, 제거 등
   function addPokemonToSidebar(name, imgUrl, objId) {
     const list = document.getElementById('selected-pokemon-list');
     const slot = document.createElement('div');
     slot.className = 'poke-slot';
     slot.dataset.id = objId;
     slot.innerHTML = `
-                <img src="${imgUrl}" style="width:40px; height:40px; background:#fff; border-radius:5px; margin-right:10px; object-fit:contain;">
-                <div><div style="font-size:16px; font-weight:bold;">${name}</div></div>
-                <button class="remove-btn" onclick="removeObject('${objId}')">-</button>
-            `;
+        <img src="${imgUrl}" style="width:40px; height:40px; background:#fff; border-radius:5px; margin-right:10px; object-fit:contain;">
+        <div><div style="font-size:16px; font-weight:bold;">${name}</div></div>
+        <button class="remove-btn" onclick="removeObject('${objId}')">-</button>
+    `;
     list.appendChild(slot);
   }
 
@@ -458,11 +464,8 @@
       const afterElement = getDragAfterElement(list, e.clientY);
       const draggable = document.querySelector('.dragging');
       if (draggable) {
-        if (afterElement == null) {
-          list.appendChild(draggable);
-        } else {
-          list.insertBefore(draggable, afterElement);
-        }
+        if (afterElement == null) list.appendChild(draggable);
+        else list.insertBefore(draggable, afterElement);
       }
     });
   }
@@ -477,11 +480,8 @@
     return draggableElements.reduce((closest, child) => {
       const box = child.getBoundingClientRect();
       const offset = y - box.top - box.height / 2;
-      if (offset < 0 && offset > closest.offset) {
-        return { offset: offset, element: child };
-      } else {
-        return closest;
-      }
+      if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+      else return closest;
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   }
 
@@ -495,30 +495,23 @@
     canvas.renderAll();
   }
 
-  // --- PNG 저장하기 기능 ---
   function saveAsPNG() {
     canvas.discardActiveObject();
     canvas.renderAll();
-
     const link = document.createElement('a');
     link.download = '포켓몬_크기비교.png';
-    link.href = canvas.toDataURL({
-      format: 'png',
-      multiplier: 2 // 고화질 저장 유지
-    });
+    link.href = canvas.toDataURL({ format: 'png', multiplier: 2 });
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
-  // --- 투명 여백 자르기 함수 ---
   function trimTransparentPixels(imgUrl, callback) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = function() {
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = img.width;
-      tempCanvas.height = img.height;
+      tempCanvas.width = img.width; tempCanvas.height = img.height;
       const ctx = tempCanvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
@@ -528,8 +521,7 @@
 
       for (let y = 0; y < tempCanvas.height; y++) {
         for (let x = 0; x < tempCanvas.width; x++) {
-          const alpha = data[(y * tempCanvas.width + x) * 4 + 3];
-          if (alpha > 0) {
+          if (data[(y * tempCanvas.width + x) * 4 + 3] > 0) {
             if (top === null) top = y;
             bottom = y;
             if (left === null || x < left) left = x;
@@ -542,8 +534,7 @@
         const trimmedWidth = right - left + 1;
         const trimmedHeight = bottom - top + 1;
         const trimmedCanvas = document.createElement('canvas');
-        trimmedCanvas.width = trimmedWidth;
-        trimmedCanvas.height = trimmedHeight;
+        trimmedCanvas.width = trimmedWidth; trimmedCanvas.height = trimmedHeight;
         trimmedCanvas.getContext('2d').drawImage(
           tempCanvas, left, top, trimmedWidth, trimmedHeight, 0, 0, trimmedWidth, trimmedHeight
         );
@@ -554,40 +545,6 @@
     };
     img.src = imgUrl;
   }
-
-  // --- 배경 일러스트 파일 업로드 ---
-  document.getElementById('bg-upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const imgData = event.target.result;
-
-      fabric.Image.fromURL(imgData, function(img) {
-        const canvasRatio = canvas.width / canvas.height;
-        const imgRatio = img.width / img.height;
-        let scale = 1;
-
-        if (canvasRatio > imgRatio) {
-          scale = canvas.width / img.width;
-        } else {
-          scale = canvas.height / img.height;
-        }
-
-        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-          scaleX: scale,
-          scaleY: scale,
-          originX: 'left',
-          originY: 'top',
-          left: 0,
-          top: 0
-        });
-      });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  });
 </script>
 </body>
 </html>
