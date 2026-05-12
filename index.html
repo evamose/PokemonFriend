@@ -201,86 +201,53 @@
     });
   };
 
-  // --- 🌟 디버깅용: 초고화질 캐릭터 파일 업로드 (오류 추적 기능 추가) ---
+  // --- 🌟 완벽 해결: 초고화질 캐릭터 파일 업로드 (여백 자르기 과정 완전 삭제, 프리패스 직행!) ---
   document.getElementById('char-upload').addEventListener('change', function(e) {
-    try {
-      const file = e.target.files[0];
-      if (!file) {
-        alert("[오류 1] 파일을 선택하지 않았습니다.");
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const nameInput = document.getElementById('char-name').value;
+    const displayName = nameInput ? nameInput : '내 캐릭터';
+    const heightInput = document.getElementById('char-height').value;
+    const charHeightCm = heightInput ? parseFloat(heightInput) : 180;
+
+    const targetPixelHeight = charHeightCm * 3.5;
+    const objectUrl = URL.createObjectURL(file);
+    const objId = 'obj_' + Date.now();
+
+    // 🚨 멈춤의 원인이었던 trimTransparentPixels(...) 부분을 아예 삭제했습니다!
+    // 파일 가상 주소를 곧바로 Fabric.js 엔진에 넘겨서 캔버스에 그립니다.
+    fabric.Image.fromURL(objectUrl, function(img) {
+      if (!img) {
+        alert("이미지를 캔버스에 불러오지 못했습니다.");
         return;
       }
 
-      alert("[확인 1] 파일 선택 완료: " + file.name + " (" + (file.size / 1024).toFixed(2) + " KB)");
+      const scale = targetPixelHeight / img.height;
 
-      const nameInput = document.getElementById('char-name').value;
-      const displayName = nameInput ? nameInput : '내 캐릭터';
-      const heightInput = document.getElementById('char-height').value;
-      const charHeightCm = heightInput ? parseFloat(heightInput) : 180;
-
-      const targetPixelHeight = charHeightCm * 3.5;
-
-      // 1. 가상 URL 생성 테스트
-      let objectUrl;
-      try {
-        objectUrl = URL.createObjectURL(file);
-        alert("[확인 2] 가상 URL 생성 성공: " + objectUrl);
-      } catch (err) {
-        alert("[오류 2] URL.createObjectURL 실패: " + err.message);
-        return;
-      }
-
-      const objId = 'obj_' + Date.now();
-
-      alert("[확인 3] 투명 여백 자르기(trim) 함수 시작...");
-
-      // 2. 투명 여백 자르기 함수 실행
-      trimTransparentPixels(objectUrl, function(trimmedImgUrl) {
-        alert("[확인 4] 여백 자르기 완료! 캔버스에 그리기 시작...");
-
-        // 3. Fabric.js로 캔버스에 그리기
-        fabric.Image.fromURL(trimmedImgUrl, function(img) {
-          if (!img) {
-            alert("[오류 3] Fabric.js에서 이미지를 인식하지 못했습니다.");
-            return;
-          }
-
-          alert("[확인 5] Fabric.js 이미지 로드 성공! 캔버스에 추가합니다.");
-
-          try {
-            const scale = targetPixelHeight / img.height;
-
-            img.set({
-              id: objId,
-              left: (canvas.width / 2) - ((img.width * scale) / 2),
-              top: (canvas.height / 2) - ((img.height * scale) / 2),
-              scaleX: scale, scaleY: scale,
-              transparentCorners: false, cornerColor: '#555', cornerSize: 10,
-              objectCaching: false
-            });
-
-            canvas.add(img);
-            canvas.setActiveObject(img);
-
-            // 줌아웃 적용
-            if(typeof autoFitObject === 'function') {
-              autoFitObject(img.height * scale);
-            }
-
-            addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, trimmedImgUrl, objId);
-            addLayerToSidebar(displayName, objId);
-
-            alert("[성공!] 모든 작업이 정상적으로 완료되었습니다.");
-
-          } catch (fabricErr) {
-            alert("[오류 4] 캔버스 추가 중 에러 발생: " + fabricErr.message);
-          }
-        }, { crossOrigin: 'anonymous' });
+      img.set({
+        id: objId,
+        left: (canvas.width / 2) - ((img.width * scale) / 2),
+        top: (canvas.height / 2) - ((img.height * scale) / 2),
+        scaleX: scale, scaleY: scale,
+        transparentCorners: false, cornerColor: '#555', cornerSize: 10,
+        objectCaching: false // 화질 깨짐 방지 유지
       });
 
-    } catch (mainErr) {
-      alert("[치명적 오류] 알 수 없는 전체 에러: " + mainErr.message);
-    }
-    e.target.value = ''; // 입력창 초기화
+      canvas.add(img);
+      canvas.setActiveObject(img);
+
+      // 거대한 이미지가 올라오면 화면을 줌아웃해서 전신을 보여줌
+      if(typeof autoFitObject === 'function') {
+        autoFitObject(img.height * scale);
+      }
+
+      addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, objectUrl, objId);
+      addLayerToSidebar(displayName, objId);
+
+    }); // 외부 이미지 검사(crossOrigin) 옵션도 내 파일이므로 필요 없어서 뺐습니다.
+
+    e.target.value = ''; // 같은 파일 다시 올릴 수 있게 초기화
   });
 
   // --- 고해상도 배경 이미지 추가 ---
