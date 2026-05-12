@@ -390,7 +390,8 @@
 
       searchResults.innerHTML = `
         <div class="result-item" onclick="addPokemonToMain('${koreanName}', ${heightCm}, '${imageUrl}')">
-            <img src="${imageUrl}" alt="${koreanName}" class="result-img">
+            <!-- 🌟 수정됨: crossorigin="anonymous" 속성 추가 -->
+            <img src="${imageUrl}" alt="${koreanName}" class="result-img" crossorigin="anonymous">
             <div class="result-info"><div class="result-name">${koreanName}</div><div class="result-height">설정 키: ${heightCm}cm</div></div>
         </div>
       `;
@@ -403,7 +404,9 @@
     const targetPixelHeight = heightCm * 3.5;
 
     trimTransparentPixels(imgUrl, function(trimmedImgUrl) {
+      // 🌟 수정됨: 세 번째 파라미터로 { crossOrigin: 'anonymous' } 옵션 추가
       fabric.Image.fromURL(trimmedImgUrl, function(img) {
+        if (!img) return;
         const scale = targetPixelHeight / img.height;
         img.set({
           id: objId,
@@ -419,7 +422,7 @@
 
         addPokemonToSidebar(name, trimmedImgUrl, objId);
         addLayerToSidebar(name, objId);
-      });
+      }, { crossOrigin: 'anonymous' }); // 👈 바로 이 부분!
     });
   }
 
@@ -508,42 +511,50 @@
 
   function trimTransparentPixels(imgUrl, callback) {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = 'anonymous'; // 🌟 필수: 외부 이미지 권한 요청
     img.onload = function() {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = img.width; tempCanvas.height = img.height;
       const ctx = tempCanvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
 
-      const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imageData.data;
-      let top = null, bottom = null, left = null, right = null;
+      try {
+        const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+        const data = imageData.data;
+        let top = null, bottom = null, left = null, right = null;
 
-      for (let y = 0; y < tempCanvas.height; y++) {
-        for (let x = 0; x < tempCanvas.width; x++) {
-          if (data[(y * tempCanvas.width + x) * 4 + 3] > 0) {
-            if (top === null) top = y;
-            bottom = y;
-            if (left === null || x < left) left = x;
-            if (right === null || x > right) right = x;
+        for (let y = 0; y < tempCanvas.height; y++) {
+          for (let x = 0; x < tempCanvas.width; x++) {
+            if (data[(y * tempCanvas.width + x) * 4 + 3] > 0) {
+              if (top === null) top = y;
+              bottom = y;
+              if (left === null || x < left) left = x;
+              if (right === null || x > right) right = x;
+            }
           }
         }
-      }
 
-      if (top !== null) {
-        const trimmedWidth = right - left + 1;
-        const trimmedHeight = bottom - top + 1;
-        const trimmedCanvas = document.createElement('canvas');
-        trimmedCanvas.width = trimmedWidth; trimmedCanvas.height = trimmedHeight;
-        trimmedCanvas.getContext('2d').drawImage(
-          tempCanvas, left, top, trimmedWidth, trimmedHeight, 0, 0, trimmedWidth, trimmedHeight
-        );
-        callback(trimmedCanvas.toDataURL('image/png'));
-      } else {
+        if (top !== null) {
+          const trimmedWidth = right - left + 1;
+          const trimmedHeight = bottom - top + 1;
+          const trimmedCanvas = document.createElement('canvas');
+          trimmedCanvas.width = trimmedWidth; trimmedCanvas.height = trimmedHeight;
+          trimmedCanvas.getContext('2d').drawImage(
+            tempCanvas, left, top, trimmedWidth, trimmedHeight, 0, 0, trimmedWidth, trimmedHeight
+          );
+          callback(trimmedCanvas.toDataURL('image/png'));
+        } else {
+          callback(imgUrl);
+        }
+      } catch (e) {
+        // 🌟 깃허브에서 보안 에러가 터져도 프로그램이 멈추지 않고 원본 이미지를 넘기도록 예외 처리
+        console.warn("여백 자르기 보안 에러 발생, 원본으로 대체합니다.", e);
         callback(imgUrl);
       }
     };
-    img.src = imgUrl;
+
+    // 🌟 수정됨: 브라우저 캐시를 무시하고 무조건 새로 불러오게 만들어 CORS 충돌 방지
+    img.src = imgUrl + '?v=' + new Date().getTime();
   }
 </script>
 </body>
