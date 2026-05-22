@@ -915,6 +915,25 @@
     if (imgUrl.startsWith('http')) img.src = imgUrl + '?v=' + new Date().getTime();
     else img.src = imgUrl;
   }
+
+  // --- 🌟 새 기능: 키보드 단축키 (Ctrl+Z, Ctrl+Y) 지원 ---
+  window.addEventListener('keydown', function(e) {
+    // 검색창이나 이름 입력창 등에서 글씨를 타이핑 중일 때는 단축키 작동 방지
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    // Ctrl 키(윈도우) 또는 Cmd 키(맥)가 눌려있는지 확인
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'z' || e.key === 'Z') {
+        e.preventDefault(); // 브라우저의 기본 뒤로가기 동작을 막음
+        undo();             // 내가 만든 되돌리기 함수 실행
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        redo();             // 내가 만든 다시 실행 함수 실행
+      }
+    }
+  });
 </script>
 </body>
 </html>
