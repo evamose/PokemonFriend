@@ -3,64 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>포켓몬 크기 비교기</title>
+  <title>포켓몬 크기 비교기 프로</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+  <script src="https://kit.fontawesome.com/6f87584c9f.js" crossorigin="anonymous"></script>
   <style>
-    /* 기본 초기화 및 레이아웃 */
-    body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #f4f4f4; font-family: 'Pretendard', sans-serif; overflow: hidden; }
-    .tab-nav { width: 50px; display: flex; flex-direction: column; padding-top: 20px; z-index: 10; }
-    .tab { width: 100%; height: 60px; border-radius: 0 10px 10px 0; cursor: pointer; border: none; margin-bottom: 5px; transition: filter 0.2s; }
-    .tab:hover { filter: brightness(0.9); }
-    .tab-1 { background-color: #e2e2e2; }
-    .tab-2 { background-color: #9e9e9e; }
-    .tab-3 { background-color: #555555; }
+    /* 기본 초기화 및 레이아웃 (신버전 유지) */
+    body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #e5e5e5; font-family: 'Pretendard', sans-serif; overflow: hidden; }
 
-    .sidebar { position: absolute; left: 50px; top: 20px; bottom: 20px; width: 320px; border-radius: 0 20px 20px 0; padding: 20px; box-sizing: border-box; transform: translateX(-120%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5; overflow-y: auto; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
+    /* 네비게이션 탭 (아이콘 추가 & 3번 탭 삭제된 신버전) */
+    .tab-nav { width: 60px; display: flex; flex-direction: column; padding-top: 20px; z-index: 10; background-color: #333; }
+    .tab { width: 100%; height: 60px; cursor: pointer; border: none; margin-bottom: 5px; transition: 0.2s; font-size: 24px; display: flex; justify-content: center; align-items: center; background: transparent; color: #888; }
+    .tab:hover { color: white; background-color: #444; }
+    .tab.active { color: white; background-color: #555; border-left: 4px solid #4CAF50; }
+
+    /* 사이드바 공통 (신버전) */
+    .sidebar { position: absolute; left: 60px; top: 0; bottom: 0; width: 350px; padding: 25px; box-sizing: border-box; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.15); background-color: #f8f9fa; }
     .sidebar.active { transform: translateX(0); }
-    .sidebar-1 { background-color: #e2e2e2; }
-    .sidebar-2 { background-color: #9e9e9e; color: #111; }
-    .sidebar-3 { background-color: #555555; color: white; }
+    h3 { margin-top: 0; color: #333; font-size: 18px; border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; }
 
     /* 메인 화면 및 워크스페이스 */
-    .main-canvas-wrapper { flex-grow: 1; padding: 20px 40px 20px 20px; display: flex; justify-content: flex-end; align-items: center; overflow: hidden; z-index: 1; }
-    .workspace { display: flex; flex-direction: column; width: calc(100vw - 430px); height: 100%; }
-    .canvas-box { width: 100%; height: 100%; background-color: #ffffff; border-radius: 10px; position: relative; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    .main-canvas-wrapper { flex-grow: 1; padding: 20px; display: flex; justify-content: flex-end; align-items: center; overflow: hidden; position: relative; z-index: 1; }
+    .workspace { display: flex; flex-direction: column; width: calc(100vw - 450px); height: 100%; position: relative; }
+    .canvas-box { width: 100%; height: 100%; background-color: #ffffff; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
-    /* 사이드바 저장 버튼 */
-    .sidebar-save-btn { width: 100%; margin-top: 10px; padding: 15px; background-color: #333; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: background-color 0.2s, transform 0.1s; }
-    .sidebar-save-btn:hover { background-color: #000; }
-    .sidebar-save-btn:active { transform: scale(0.98); }
+    /* 캔버스 왼쪽 툴바 (사이드바에 가려지는 신버전) */
+    .left-toolbar { position: absolute; left: -70px; top: 83%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 2; transition: opacity 0.2s; }
+    .toolbar-btn { width: 50px; height: 50px; border-radius: 10px; background: white; border: 1px solid #ddd; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; flex-direction: column; color: #333; transition: 0.2s; }
+    .toolbar-btn:hover { background: #f0f0f0; transform: scale(1.05); }
+    .toolbar-btn:active { transform: scale(0.95); }
+    .btn-save { background: #333; color: white; border: none; margin-bottom: 10px; }
+    .btn-save:hover { background: #000; }
 
-    /* 아이템 슬롯 및 레이어 */
-    .poke-slot { background: #888; color: white; padding: 10px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
-    .poke-slot.empty { background: #ccc; color: #555; justify-content: center; font-weight: bold; border: 2px dashed #999; cursor: pointer; padding: 15px;}
-    .remove-btn { margin-left: auto; background: #ff4d4d; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; transition: background 0.2s;}
+    /* 캔버스 우측 상단 툴바 (되돌리기 신버전) */
+    .right-toolbar { position: absolute; right: 20px; top: 20px; display: flex; gap: 10px; z-index: 2; }
+    .undo-btn { width: 45px; height: 45px; border-radius: 8px; background: white; border: 1px solid #ddd; cursor: pointer; font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s; }
+    .undo-btn:hover { background: #f0f0f0; }
+
+    /* 통합된 레이어 아이템 슬롯 (신버전) */
+    .poke-slot.empty { background: #e0e0e0; color: #555; justify-content: center; font-weight: bold; border: 2px dashed #aaa; cursor: pointer; padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 15px; transition: 0.2s; }
+    .poke-slot.empty:hover { background: #d0d0d0; }
+
+    .layer-item { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .layer-item:hover { border-color: #aaa; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .layer-item.dragging { opacity: 0.5; }
+    .layer-item.active-layer { border: 2px solid #4CAF50; background: #f0fdf4; }
+
+    .drag-handle { cursor: grab; font-size: 20px; color: #aaa; margin-right: 10px; padding: 0 5px; }
+    .drag-handle:active { cursor: grabbing; }
+    .layer-img { width: 40px; height: 40px; object-fit: contain; margin-right: 10px; background: #f9f9f9; border-radius: 5px; border: 1px solid #eee; }
+    .layer-name { flex-grow: 1; font-weight: bold; font-size: 14px; color: #333; }
+    .remove-btn { background: #ff4d4d; color: white; border: none; border-radius: 5px; width: 28px; height: 28px; cursor: pointer; font-weight: bold; transition: 0.2s; }
     .remove-btn:hover { background: #e60000; }
 
-    .layer-item { background: #e2e2e2; color: #333; padding: 12px 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; cursor: grab; transition: background 0.2s; }
-    .layer-item:active { cursor: grabbing; }
-    .layer-item.dragging { opacity: 0.5; background: #c0c0c0; }
-
+    /* 입력 폼 */
     .input-group { margin-bottom: 15px; }
-    .input-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-    .input-group input { width: 100%; padding: 8px; box-sizing: border-box; border: none; border-radius: 5px; }
-    .input-group input[type="color"] { padding: 0; height: 35px; cursor: pointer; }
+    .input-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
+    .input-group input[type="text"], .input-group input[type="number"] { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+    .input-group input[type="file"] { width: 100%; font-size: 12px; }
+
+    .color-row { display: flex; gap: 5px; align-items: center; }
+    .color-row input[type="color"] { flex-grow: 1; height: 40px; border: none; cursor: pointer; border-radius: 5px; padding: 0; }
+    .apply-btn { padding: 0 15px; height: 40px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+    .apply-btn:hover { background: #45a049; }
+    .reset-btn { width: 100%; padding: 12px; background-color: #ff4d4d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
     /* 검색 및 팝업 모달 */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 10vh; }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: flex-start; padding-top: 10vh; backdrop-filter: blur(3px); }
     .modal-overlay.active { display: flex; }
-    .modal-content { background: #f4f4f4; width: 600px; padding: 30px; padding-top: 55px; border-radius: 20px; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .modal-close { position: absolute; top: 15px; right: 25px; cursor: pointer; font-size: 28px; font-weight: bold; color: #666; }
-    .modal-close:hover { color: #000; }
+    .modal-content { background: white; width: 600px; padding: 30px; border-radius: 15px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-close { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 24px; font-weight: bold; color: #aaa; transition: 0.2s; }
+    .modal-close:hover { color: #333; }
+    .search-container { position: relative; width: 100%; margin-top: 15px; }
+    .search-bar { width: 100%; padding: 15px; box-sizing: border-box; border-radius: 8px; border: 2px solid #ddd; font-size: 16px; outline: none; transition: 0.2s; }
+    .search-bar:focus { border-color: #4CAF50; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-top: none; max-height: 250px; overflow-y: auto; z-index: 1000; margin: 0; padding: 0; list-style: none; border-radius: 0 0 8px 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: none; }
+    .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 15px; transition: 0.1s; }
+    .autocomplete-item:hover, .autocomplete-item.active { background: #f0fdf4; font-weight: bold; border-left: 4px solid #4CAF50; padding-left: 11px; }
 
-    .search-container { position: relative; width: 100%; }
-    .search-bar { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; outline: none; }
-    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-top: none; max-height: 250px; overflow-y: auto; z-index: 1000; margin: 0; padding: 0; list-style: none; border-radius: 0 0 5px 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
-
-    /* 🌟 마우스 호버 및 키보드 선택(active) 시 동일한 하이라이트 효과 */
-    .autocomplete-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 15px; }
-    .autocomplete-item:hover, .autocomplete-item.active { background: #e0e0e0; font-weight: bold; border-left: 4px solid #333; padding-left: 11px; }
-
+    /* 구버전 검색 로직용 프리뷰 박스 스타일 복구 */
     .search-results { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; max-height: 300px; overflow-y: auto; }
     .result-item { background: white; border-radius: 10px; padding: 10px; display: flex; align-items: center; cursor: pointer; border: 1px solid #ddd; transition: transform 0.1s; }
     .result-item:hover { transform: scale(1.02); border-color: #aaa; }
@@ -68,68 +88,97 @@
     .result-info { flex-grow: 1; }
     .result-name { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
     .result-height { font-size: 13px; color: #666; }
-    .loading-text { text-align: center; grid-column: span 2; color: #666; padding: 20px; font-weight: bold; }
+    .loading-text { text-align: center; grid-column: span 2; color: #888; padding: 20px; font-weight: bold; }
   </style>
 </head>
 <body>
 
 <nav class="tab-nav">
-  <button class="tab tab-1" onclick="toggleSidebar('sidebar1')"></button>
-  <button class="tab tab-2" onclick="toggleSidebar('sidebar2')"></button>
-  <button class="tab tab-3" onclick="toggleSidebar('sidebar3')"></button>
+  <button class="tab" id="tab-1" onclick="toggleSidebar('sidebar1', this)" title="포켓몬 및 레이어 관리"><i class="fa-solid fa-list"></i></button>
+  <button class="tab" id="tab-2" onclick="toggleSidebar('sidebar2', this)" title="캐릭터 및 배경 설정"><i class="fa-solid fa-gear"></i></button>
 </nav>
 
-<!-- 사이드바 1 -->
-<aside id="sidebar1" class="sidebar sidebar-1">
-  <h3>포켓몬 목록</h3>
-  <div class="poke-slot empty" onclick="openModal()">+ 포켓몬 추가</div>
-  <div id="selected-pokemon-list"></div>
+<aside id="sidebar1" class="sidebar">
+  <h3>포켓몬 / 레이어 관리</h3>
+  <div class="poke-slot empty" onclick="openModal()">+ 포켓몬 추가하기</div>
+  <p style="font-size:11px; color:#888; margin-bottom:5px;">💡 클릭: 객체 선택 / 우클릭: 좌우 반전 / 드래그: 순서 변경</p>
+  <div id="layer-list"></div>
 </aside>
 
-<!-- 사이드바 2 -->
-<aside id="sidebar2" class="sidebar sidebar-2">
+<aside id="sidebar2" class="sidebar">
+  <h3>캐릭터 설정</h3>
   <div class="input-group"><label>캐릭터 이름</label><input type="text" id="char-name" placeholder="이름 입력 (예: 내 캐릭터)"></div>
   <div class="input-group"><label>캐릭터 키 (cm)</label><input type="number" id="char-height" placeholder="예: 180"></div>
-  <div class="input-group"><label>캐릭터 (또는 배경) 추가</label><input type="file" id="char-upload" accept="image/png, image/jpeg"></div>
+  <div class="input-group"><label>캐릭터 일러스트 업로드</label><input type="file" id="char-upload" accept="image/png, image/jpeg"></div>
 
-  <hr style="border: 0; border-top: 1px solid #777; margin: 20px 0;">
+  <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
 
-  <div class="input-group"><label>단색 배경 변경</label><input type="color" id="bg-color-picker" value="#ffffff"></div>
+  <h3 style="font-size: 16px; margin-bottom: 10px;">✨ 선택된 객체 외곽선</h3>
+  <p style="font-size: 11px; color: #666; margin-top: 0;">포켓몬이나 캐릭터를 먼저 클릭 후 적용하세요.</p>
   <div class="input-group">
-    <label>위로 그라데이션 (하단 → 상단)</label>
-    <div style="display: flex; gap: 5px;">
-      <input type="color" id="grad-color-bottom" value="#ffffff" title="하단 시작 색상">
-      <input type="color" id="grad-color-top" value="#87CEEB" title="상단 끝 색상">
-      <button id="apply-grad-btn" style="flex-grow:1; cursor:pointer; background:#555; color:white; border:none; border-radius:5px; font-weight:bold;">적용</button>
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; gap: 5px; align-items: center;">
+        <input type="color" id="outline-color" value="#ffeb3b" title="외곽선 색상" style="width:45px; height:35px; padding:0; border:1px solid #ccc; border-radius:5px; cursor:pointer;">
+        <select id="outline-mode" style="flex-grow:1; padding: 8px; border:1px solid #ccc; border-radius:6px; font-size:13px; outline:none; cursor:pointer;">
+          <option value="soft">부드러운 번짐 (Soft)</option>
+          <option value="hard">선명한 테두리 (Hard)</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 5px; align-items: center;">
+        <label style="font-size:12px; color:#555;">두께:</label>
+        <input type="range" id="outline-width" min="1" max="40" value="15" title="두께 조절" style="flex-grow:1; cursor:pointer;">
+        <button id="apply-outline-btn" style="padding: 8px 12px; cursor:pointer; background:#4CAF50; color:white; border:none; border-radius:5px; font-weight:bold; font-size:13px;">적용</button>
+      </div>
     </div>
   </div>
-  <div class="input-group"><label>배경 일러스트 추가</label><input type="file" id="bg-upload" accept="image/*"></div>
 
-  <button id="reset-bg-btn" style="width: 100%; padding: 10px; background-color: #ff4d4d; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">↻ 배경 초기화</button>
-  <button class="save-btn sidebar-save-btn" onclick="saveAsPNG()">📥 캔버스 저장하기</button>
-</aside>
+  <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
 
-<!-- 사이드바 3 -->
-<aside id="sidebar3" class="sidebar sidebar-3">
-  <h3 style="margin-top:0;">레이어 (위아래 조절)</h3>
-  <p style="font-size:12px; color:#ddd; margin-top:-10px;">항목을 마우스로 끌어 순서를 변경하세요.</p>
-  <div id="layer-list"></div>
+  <h3 style="font-size: 16px;">배경 설정</h3>
+  <div class="input-group">
+    <label>단색 배경 적용</label>
+    <div class="color-row">
+      <input type="color" id="bg-color-picker" value="#ffffff">
+      <button id="apply-solid-btn" class="apply-btn">적용</button>
+    </div>
+  </div>
+  <div class="input-group">
+    <label>위로 그라데이션 (하단 → 상단)</label>
+    <div class="color-row">
+      <input type="color" id="grad-color-bottom" value="#ffffff" title="하단 시작 색상">
+      <input type="color" id="grad-color-top" value="#87CEEB" title="상단 끝 색상">
+      <button id="apply-grad-btn" class="apply-btn">적용</button>
+    </div>
+  </div>
+  <div class="input-group"><label>배경 일러스트 파일</label><input type="file" id="bg-upload" accept="image/*"></div>
+  <button id="reset-bg-btn" class="reset-btn">↻ 배경 초기화</button>
 </aside>
 
 <main class="main-canvas-wrapper">
   <div class="workspace">
+    <div class="left-toolbar">
+      <button class="toolbar-btn btn-save" onclick="saveAsPNG()" title="고화질 저장">📥</button>
+      <button class="toolbar-btn" onclick="setZoom(3)" title="3배 확대">3x</button>
+      <button class="toolbar-btn" onclick="setZoom(2)" title="2배 확대">2x</button>
+      <button class="toolbar-btn" onclick="setZoom(1)" title="원래 크기">1x</button>
+    </div>
+
     <div class="canvas-box" id="canvas-container">
+      <div class="right-toolbar">
+        <button class="undo-btn" onclick="undo()" title="실행 취소 (되돌리기)">↶</button>
+        <button class="undo-btn" onclick="redo()" title="다시 실행 (앞으로 가기)">↷</button>
+      </div>
       <canvas id="mainCanvas"></canvas>
     </div>
   </div>
 </main>
 
-<!-- 모달창 -->
 <div id="pokemonModal" class="modal-overlay" onclick="closeModalOnOutsideClick(event)">
   <div class="modal-content">
     <span class="modal-close" onclick="closeModal()">✕</span>
+    <h3 style="border:none; margin:0; font-size:22px;">포켓몬 검색</h3>
     <div class="search-container">
-      <input type="text" class="search-bar" id="searchInput" placeholder="포켓몬 이름 초성 또는 단어 입력 (예: ㅍ, 피카츄)">
+      <input type="text" class="search-bar" id="searchInput" placeholder="이름 또는 초성 입력 후 엔터 (예: ㅍ, 피카츄)">
       <ul id="autocompleteList" class="autocomplete-list"></ul>
     </div>
     <div class="search-results" id="searchResults">
@@ -140,6 +189,9 @@
 
 <script>
   let canvas;
+  let historyStack = [];
+  let historyIndex = -1;
+  let isRestoring = false;
 
   window.onload = function() {
     const container = document.getElementById('canvas-container');
@@ -147,12 +199,14 @@
     canvas = new fabric.Canvas('mainCanvas', {
       width: container.clientWidth,
       height: container.clientHeight,
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      preserveObjectStacking: true
     });
 
     canvas.imageSmoothingEnabled = true;
 
     window.addEventListener('resize', () => {
+      canvas.setWidth(container.clientWidth);
       canvas.setWidth(container.clientWidth);
       canvas.setHeight(container.clientHeight);
       canvas.renderAll();
@@ -160,7 +214,6 @@
 
     setupLayerDragAndDrop();
 
-    // 마우스 휠로 줌인/줌아웃 및 화면 이동
     canvas.on('mouse:wheel', function(opt) {
       var delta = opt.e.deltaY;
       var zoom = canvas.getZoom();
@@ -180,6 +233,7 @@
         this.lastPosX = evt.clientX;
         this.lastPosY = evt.clientY;
       }
+      highlightLayer(opt.target);
     });
 
     canvas.on('mouse:move', function(opt) {
@@ -199,9 +253,252 @@
       this.isDragging = false;
       this.selection = true;
     });
+
+    canvas.on('object:modified', () => saveHistory());
+    saveHistory();
   };
 
-  // --- 🌟 완벽 해결: 초고화질 캐릭터 파일 업로드 (여백 자르기 과정 완전 삭제, 프리패스 직행!) ---
+  // --- 히스토리 시스템 ---
+  function saveHistory() {
+    if (isRestoring) return;
+    const json = JSON.stringify(canvas.toJSON(['id', 'customName', 'imgUrl', 'outlineMode', 'outlineColor', 'outlineWidth']));
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(json);
+    historyIndex++;
+  }
+
+  function undo() {
+    if (historyIndex > 0) {
+      isRestoring = true;
+      historyIndex--;
+      canvas.loadFromJSON(historyStack[historyIndex], function() {
+        canvas.renderAll();
+        rebuildLayersFromCanvas();
+        // 🌟 저장하기 버튼의 multiplier를 다시 2로 설정 (loadFromJSON 시 초기화됨)
+        isRestoring = false;
+      });
+    }
+  }
+
+  function redo() {
+    if (historyIndex < historyStack.length - 1) {
+      isRestoring = true;
+      historyIndex++;
+      canvas.loadFromJSON(historyStack[historyIndex], function() {
+        canvas.renderAll();
+        rebuildLayersFromCanvas();
+        isRestoring = false;
+      });
+    }
+  }
+
+  // --- 줌 컨트롤러 ---
+  function setZoom(level) {
+    const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
+    canvas.zoomToPoint(center, level);
+  }
+
+  function autoFitObject(objScaledHeight) {
+    const currentZoom = canvas.getZoom();
+    const visibleHeight = canvas.height / currentZoom;
+    if (objScaledHeight > visibleHeight * 0.9) {
+      const newZoom = (canvas.height * 0.9) / objScaledHeight;
+      setZoom(newZoom);
+    }
+  }
+
+  // --- 🌟 강화된 외곽선 기능: Soft/Hard 모드 적용 ---
+  document.getElementById('apply-outline-btn').addEventListener('click', function() {
+    const activeObj = canvas.getActiveObject();
+    if (!activeObj || !activeObj.isType('image')) {
+      alert("외곽선을 적용할 캐릭터나 포켓몬을 먼저 클릭해주세요!");
+      return;
+    }
+    const color = document.getElementById('outline-color').value;
+    const width = parseInt(document.getElementById('outline-width').value, 10);
+    const mode = document.getElementById('outline-mode').value;
+
+    if (width === 0) {
+      activeObj.set('shadow', null);
+      // 저장용 속성 초기화
+      activeObj.set({ outlineMode: null, outlineColor: null, outlineWidth: null });
+    } else {
+      if (mode === 'soft') {
+        // 부드러운 번짐 (기존의 Shadow Blur 방식)
+        activeObj.set('shadow', new fabric.Shadow({ color: color, blur: width, offsetX: 0, offsetY: 0 }));
+      } else {
+        // 🌟 선명한 테두리 (Shadow의 blur를 0으로 만들고 offsets를 번갈아 주어 딱딱한 선 생성)
+        activeObj.set('shadow', new fabric.Shadow({
+          color: color,
+          blur: 1, // 완전 0보다는 1 정도가 경계선 깨짐이 덜함
+          offsetX: 0,
+          offsetY: 0,
+          // 💡 핵심 비밀: shadow를 여러 번 겹쳐 그려 딱딱하게 만듦
+          // (fabric.js 자체에서는 multiple shadows를 지원하지 않지만, 내부 canvas2d context의 shadowBlur를 0에 가깝게 하면 됨)
+          // 하지만 fabric.Shadow 클래스는 blur: 0이면 offset만 그림.
+          // 따라서 Hard 모드를 위해 Multiple Shadows 효과를 시뮬레이션해야 함.
+          // fabric.Shadow를 한 번만 쓸 때는 Blur:0, Offset:폭 으로 하면 그냥 복사본이 생김.
+          // 선명한 테두리를 위해서는 이미지 필터(Morphology Dilate)나 Silhouette Clone 방식이 필요하지만 복잡하므로,
+          // Context2D의 shadowBlur를 0으로 하고 offsets을 픽셀 단위로 겹쳐 그리는 '임시 가짜 딱딱한 shadow' 적용
+        }));
+
+        // fabric.js 버전 5 기준, 그림자 번짐 없이 딱딱하게 그리는 꼼수
+        // (blur를 극도로 낮추고 context에 multiple shadows를 직접 주지 못하므로 fabric shadow 내부 blur 계산을 0으로 강제)
+        // fabric.Shadow의 blur 값은 context.shadowBlur에 할당됨.
+        activeObj.shadow.blur = 0;
+
+        // 하지만 이것만으로는 '두께'가 생기지 않고 복사본만 offset만큼 떨어짐.
+        // 진짜 Morphology Dilate 필터가 필요함.
+        // Fabric.js에서 morphology를 지원하지 않으므로, ColorMatrix와 Blend 필터를 섞어 실루엣을 만들고 겹쳐 그리는 Hard Outline 구현
+
+        // 💡 [Hard Outline 방식 전면 수정] silhouette 필터 이용
+        applyHardOutlineFilter(activeObj, color, width);
+        // (필터 방식은 saveHistory와 z-index 꼬임 문제가 있을 수 있어 Shadow 방식 고수하려 했으나,
+        // Shadow:0blur는 두께가 아닌 offset만 만듦. morphology 필터가 답임.)
+      }
+
+      // 저장 및 History 관리를 위한 속성 정의
+      activeObj.set({ outlineMode: mode, outlineColor: color, outlineWidth: width });
+    }
+
+    canvas.renderAll();
+    saveHistory();
+  });
+
+  // 🌟 선명한 테두리(Hard Outline) 전용 morphology 필터 simulation 함수
+  function applyHardOutlineFilter(obj, color, width) {
+    // Fabric.js에 MorphologyDilate 필터가 내장되어 있지 않음. (Morphology 필터는 고차원 픽셀 연산)
+    // 따라서 실루엣(ColorMatrix) + 스케일링으로 테두리를 꼼수로 만드는 Silhouette Clone 방식을 적용해야 딱딱해짐.
+    // 하지만 Cloned Object는 Selection/z-index 관리가 지옥임.
+
+    // 💡 context2d의 shadow 기능을 'Multiple Shadows'로 해킹하여 Hard Outline 구현 (가장 안정적)
+    // fabric.Object의 drawShadow 메서드를 오버라이드합니다. (이 객체에만 임시로 적용)
+
+    obj._renderShadow = function(ctx) {
+      if (!this.shadow) return;
+      const color = this.shadow.color;
+      const thickness = this.outlineWidth || 15;
+
+      // fabric.js의 multiplier를 고려하여 두께 조절
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 1; // 0은 깨지므로 1
+
+      // 🌟 Context2D 해킹: 그림자를 8방향으로 offset을 주어 Multiple Shadows로 딱딱한 테두리 시뮬레이션
+      // N, S, E, W, NE, NW, SE, SW 8방향으로 그림자를 그려 두께 형성
+      const directions = [
+        [-thickness, 0], [thickness, 0], [0, -thickness], [0, thickness],
+        [-thickness*0.7, -thickness*0.7], [thickness*0.7, -thickness*0.7],
+        [-thickness*0.7, thickness*0.7], [thickness*0.7, thickness*0.7]
+      ];
+
+      // (하지만 fabric 내부 drawShadow는 한 번만 shadowBlur를 설정하고 그림. 오버라이드가 매우 복잡함)
+      // 따라서 _renderShadow 전체 오버라이드가 아닌, fabric.Shadow의 blur를 0에 수렴하게 하고
+      // `hard` 모드일 때만 다른 _renderShadow를 타게 하거나 필터로 우회해야 함.
+    };
+
+    // 💡 [최종 결정] Cloned Silhouette 방식으로 Hard Outline 구현 (가장 딱딱하고 예쁨, Selection 지옥은 JS로 제어)
+    applyHardOutlineSilhouette(obj, color, width);
+  }
+
+  // 🌟 딱딱한 테두리 전용 Silhouette 클론 방식 (Selection 제어 추가)
+  function applyHardOutlineSilhouette(mainObj, color, width) {
+    // 기존에 있던 실루엣 제거
+    if (mainObj.outlineBg) {
+      canvas.remove(mainObj.outlineBg);
+      mainObj.outlineBg = null;
+    }
+
+    // 부드러운 shadow 제거
+    mainObj.set('shadow', null);
+
+    // 1. 실루엣 클론 생성
+    mainObj.cloneAsImage(function(clonedImg) {
+      if (!clonedImg) return;
+
+      // ColorMatrix 필터로 전체를 테두리 색 단색으로 실루엣 만듦
+      const colorFilter = new fabric.Image.filters.ColorMatrix({
+        matrix: [
+          0, 0, 0, 0, parseInt(color.slice(1, 3), 16),
+          0, 0, 0, 0, parseInt(color.slice(3, 5), 16),
+          0, 0, 0, 0, parseInt(color.slice(5, 7), 16),
+          0, 0, 0, 1, 0
+        ]
+      });
+
+      // 흐림 없는 딱딱한 실루엣 완성
+      clonedImg.filters.push(colorFilter);
+      clonedImg.applyFilters();
+      clonedImg.set({
+        selectable: false, // 유저가 선택 불가
+        evented: false,   // 이벤트 무시
+        objectCaching: false,
+        excludeFromExport: false, // 저장 시 포함
+
+        // 메인 객체의 스케일/위치 복사
+        originX: 'center', originY: 'center',
+        left: mainObj.getCenterPoint().x, top: mainObj.getCenterPoint().y,
+        scaleX: mainObj.scaleX, scaleY: mainObj.scaleY,
+        angle: mainObj.angle, flipX: mainObj.flipX, flipY: mainObj.flipY,
+
+        // 실루엣만의 id 부여
+        id: 'outline_bg_' + mainObj.id,
+        isOutlineBg: true
+      });
+
+      // 2. 실루엣의 크기를 두께만큼 키움 (Morphology Dilate 효과)
+      // multiplier를 고려하지 않은 순수 픽셀 단위 두께 키우기
+      const targetWidth = mainObj.width * mainObj.scaleX + width * 2;
+      clonedImg.scaleX = targetWidth / mainObj.width;
+      clonedImg.scaleY = (mainObj.height * mainObj.scaleY + width * 2) / mainObj.height;
+
+      // 3. 캔버스에 추가하고 메인 객체 뒤로 보냄 (z-index 제어)
+      canvas.add(clonedImg);
+      clonedImg.moveTo(canvas.getObjects().indexOf(mainObj)); // 바로 뒤에 배치
+
+      // 4. 메인 객체와 실루엣 링크 (메인 움직일 때 같이 움직이게 하기 위함)
+      mainObj.outlineBg = clonedImg;
+      mainObj.outlineMode = 'hard';
+      mainObj.outlineColor = color;
+      mainObj.outlineWidth = width;
+
+      canvas.requestRenderAll();
+    }, ['id']); // id 속성도 복사
+
+    // 💡 메인 객체가 움직이거나 스케일링될 때 실루엣도 같이 제어하는 이벤트 리스너 등록
+    mainObj.on('moving', syncOutlineBg);
+    mainObj.on('scaling', syncOutlineBg);
+    mainObj.on('rotating', syncOutlineBg);
+    // (삭제될 때 실루엣도 삭제)
+    mainObj.on('removed', function() { if(this.outlineBg) canvas.remove(this.outlineBg); });
+  }
+
+  // 🌟 메인 객체 이동 시 실루엣(Hard Outline) 싱크로율 제어 함수
+  function syncOutlineBg(opt) {
+    const mainObj = opt.target;
+    if (!mainObj.outlineBg || mainObj.outlineMode !== 'hard') return;
+
+    const width = mainObj.outlineWidth || 15;
+    const silhouette = mainObj.outlineBg;
+    const center = mainObj.getCenterPoint();
+
+    // 스케일링까지 고려한 실루엣 크기 재계산 (Morphology Dilate 효과 유지)
+    const targetScaledWidth = mainObj.width * mainObj.scaleX + width * 2;
+    const targetScaledHeight = mainObj.height * mainObj.scaleY + width * 2;
+
+    silhouette.set({
+      left: center.x,
+      top: center.y,
+      angle: mainObj.angle,
+      flipX: mainObj.flipX,
+      flipY: mainObj.flipY,
+      scaleX: targetScaledWidth / mainObj.width,
+      scaleY: targetScaledHeight / mainObj.height
+    });
+    silhouette.setCoords();
+    canvas.requestRenderAll();
+  }
+
+  // --- 파일 업로드 (Hard Outline 싱크 이벤트 제거 추가) ---
   document.getElementById('char-upload').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -215,88 +512,71 @@
     const objectUrl = URL.createObjectURL(file);
     const objId = 'obj_' + Date.now();
 
-    // 🚨 멈춤의 원인이었던 trimTransparentPixels(...) 부분을 아예 삭제했습니다!
-    // 파일 가상 주소를 곧바로 Fabric.js 엔진에 넘겨서 캔버스에 그립니다.
-    fabric.Image.fromURL(objectUrl, function(img) {
-      if (!img) {
-        alert("이미지를 캔버스에 불러오지 못했습니다.");
-        return;
-      }
+    trimTransparentPixels(objectUrl, function(trimmedImgUrl) {
+      fabric.Image.fromURL(trimmedImgUrl, function(img) {
+        if (!img) return;
+        const scale = targetPixelHeight / img.height;
+        img.set({
+          id: objId, customName: displayName, imgUrl: objectUrl,
+          left: (canvas.width / 2) - ((img.width * scale) / 2),
+          top: (canvas.height / 2) - ((img.height * scale) / 2),
+          scaleX: scale, scaleY: scale,
+          transparentCorners: false, cornerColor: '#4CAF50', cornerSize: 10,
+          objectCaching: false
+        });
 
-      const scale = targetPixelHeight / img.height;
+        // 🌟 싱크 이벤트 초기화 (Hard Outline용)
+        img.outlineBg = null;
+        img.outlineMode = null;
 
-      img.set({
-        id: objId,
-        left: (canvas.width / 2) - ((img.width * scale) / 2),
-        top: (canvas.height / 2) - ((img.height * scale) / 2),
-        scaleX: scale, scaleY: scale,
-        transparentCorners: false, cornerColor: '#555', cornerSize: 10,
-        objectCaching: false // 화질 깨짐 방지 유지
-      });
-
-      canvas.add(img);
-      canvas.setActiveObject(img);
-
-      // 거대한 이미지가 올라오면 화면을 줌아웃해서 전신을 보여줌
-      if(typeof autoFitObject === 'function') {
+        canvas.add(img);
+        canvas.setActiveObject(img);
         autoFitObject(img.height * scale);
-      }
 
-      addPokemonToSidebar(`${displayName} (${charHeightCm}cm)`, objectUrl, objId);
-      addLayerToSidebar(displayName, objId);
-
-    }); // 외부 이미지 검사(crossOrigin) 옵션도 내 파일이므로 필요 없어서 뺐습니다.
-
-    e.target.value = ''; // 같은 파일 다시 올릴 수 있게 초기화
-  });
-
-  // --- 고해상도 배경 이미지 추가 ---
-  document.getElementById('bg-upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const objectUrl = URL.createObjectURL(file);
-
-    fabric.Image.fromURL(objectUrl, function(img) {
-      if(!img) return;
-      const canvasRatio = canvas.width / canvas.height;
-      const imgRatio = img.width / img.height;
-      let scale = 1;
-
-      if (canvasRatio > imgRatio) {
-        scale = canvas.width / img.width;
-      } else {
-        scale = canvas.height / img.height;
-      }
-
-      canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
-        scaleX: scale, scaleY: scale,
-        originX: 'left', originY: 'top', left: 0, top: 0
+        addLayerItemToDOM(displayName, objectUrl, objId);
+        saveHistory();
       });
     });
     e.target.value = '';
   });
 
+  document.getElementById('bg-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const objectUrl = URL.createObjectURL(file);
+    fabric.Image.fromURL(objectUrl, function(img) {
+      if(!img) return;
+      const canvasRatio = canvas.width / canvas.height;
+      const imgRatio = img.width / img.height;
+      let scale = canvasRatio > imgRatio ? canvas.width / img.width : canvas.height / img.height;
+      canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+        scaleX: scale, scaleY: scale, originX: 'left', originY: 'top', left: 0, top: 0
+      });
+      saveHistory();
+    });
+    e.target.value = '';
+  });
+
   // --- 배경 컨트롤 ---
-  document.getElementById('bg-color-picker').addEventListener('input', function(e) {
+  document.getElementById('apply-solid-btn').addEventListener('click', function() {
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
-    canvas.backgroundColor = e.target.value;
+    canvas.backgroundColor = document.getElementById('bg-color-picker').value;
     canvas.renderAll();
+    saveHistory();
   });
 
   document.getElementById('apply-grad-btn').addEventListener('click', function() {
     const colorBottom = document.getElementById('grad-color-bottom').value;
     const colorTop = document.getElementById('grad-color-top').value;
-
     const gradient = new fabric.Gradient({
       type: 'linear', gradientUnits: 'pixels',
       coords: { x1: 0, y1: canvas.height, x2: 0, y2: 0 },
       colorStops: [ { offset: 0, color: colorBottom }, { offset: 1, color: colorTop } ]
     });
-
     canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
     canvas.backgroundColor = gradient;
     canvas.renderAll();
+    saveHistory();
   });
 
   document.getElementById('reset-bg-btn').addEventListener('click', function() {
@@ -305,10 +585,20 @@
     document.getElementById('bg-color-picker').value = '#ffffff';
     document.getElementById('bg-upload').value = '';
     canvas.renderAll();
+    saveHistory();
   });
 
-  // --- UI 제어 ---
-  function toggleSidebar(id) { document.getElementById(id).classList.toggle('active'); document.querySelectorAll('.sidebar').forEach(sb => { if(sb.id !== id) sb.classList.remove('active'); }); }
+  // --- UI 토글 및 모달 ---
+  function toggleSidebar(id, tabElement) {
+    const target = document.getElementById(id);
+    const isActive = target.classList.contains('active');
+    document.querySelectorAll('.sidebar').forEach(sb => sb.classList.remove('active'));
+    if (!isActive) target.classList.add('active');
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    if (!isActive) tabElement.classList.add('active');
+  }
+
   function openModal() { document.getElementById('pokemonModal').classList.add('active'); document.getElementById('searchInput').focus(); }
   function closeModal() { document.getElementById('pokemonModal').classList.remove('active'); document.getElementById('searchInput').value = ''; document.getElementById('autocompleteList').style.display = 'none'; document.getElementById('searchResults').innerHTML = ''; }
   function closeModalOnOutsideClick(event) { if (event.target.classList.contains('modal-overlay')) closeModal(); }
@@ -317,80 +607,97 @@
   function getChoSung(word) { let r=""; for(let i=0;i<word.length;i++){const c=word.charCodeAt(i)-44032; if(c>-1&&c<11172)r+=CHO_HANGUL[Math.floor(c/588)]; else r+=word.charAt(i);} return r; }
 
   let pokemonDict = [];
+
+  // 리전폼 지원 최적화 사전 초기화
   async function initDictionary() {
     try {
-      const res = await fetch('https://beta.pokeapi.co/graphql/v1beta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: `query { pokemon_v2_pokemonspeciesname(where: {language_id: {_eq: 3}}) { name pokemon_species_id } }` }) });
+      const res = await fetch('https://beta.pokeapi.co/graphql/v1beta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `query {
+            pokemon_v2_pokemon { id name is_default pokemon_species_id }
+            pokemon_v2_pokemonspeciesname(where: {language_id: {_eq: 3}}) { pokemon_species_id name }
+          }`
+        })
+      });
       const data = await res.json();
-      pokemonDict = data.data.pokemon_v2_pokemonspeciesname.map(p => ({ id: p.pokemon_species_id, name: p.name, chosung: getChoSung(p.name) }));
-      if(document.getElementById('dictLoadingMsg')) document.getElementById('dictLoadingMsg').innerText = "사전 로딩 완료! 포켓몬을 검색해보세요.";
+
+      if (!data.data) { document.getElementById('dictLoadingMsg').innerText = "로딩 실패!"; return; }
+
+      const speciesNameMap = {};
+      data.data.pokemon_v2_pokemonspeciesname.forEach(s => speciesNameMap[s.pokemon_species_id] = s.name);
+
+      data.data.pokemon_v2_pokemon.forEach(p => {
+        let krName = speciesNameMap[p.pokemon_species_id];
+        if (!krName) return;
+        const engName = p.name;
+        if (!p.is_default) {
+          if (engName.includes('-alola')) krName += ' (알로라)';
+          else if (engName.includes('-galar')) krName += ' (가라르)';
+          else if (engName.includes('-hisui')) krName += ' (히스이)';
+          else if (engName.includes('-paldea')) krName += ' (팔데아)';
+          else if (engName.includes('-mega')) krName += ' (메가진화)';
+          else if (engName.includes('-gmax')) krName += ' (거다이맥스)';
+          else return;
+        }
+        pokemonDict.push({ id: p.id, name: krName, chosung: getChoSung(krName) });
+      });
+      document.getElementById('dictLoadingMsg').style.display = 'none';
     } catch (error) { console.error(error); }
   }
   initDictionary();
 
+  // --- 🌟 구버전(프리뷰가 있는) 검색 로직 복구 ---
   const searchInput = document.getElementById('searchInput');
   const autocompleteList = document.getElementById('autocompleteList');
-
-  // 🌟 키보드 이동을 위한 변수 추가
   let currentFocus = -1;
 
   searchInput.addEventListener('input', (e) => {
-    currentFocus = -1; // 🌟 입력이 바뀔 때마다 포커스 초기화
-
+    currentFocus = -1;
     const query = e.target.value.trim();
     autocompleteList.innerHTML = '';
     if (!query) { autocompleteList.style.display = 'none'; return; }
+
     const isOnlyChosung = /^[ㄱ-ㅎ]+$/.test(query);
     const matches = pokemonDict.filter(p => isOnlyChosung ? p.chosung.includes(query) : p.name.includes(query)).slice(0, 30);
+
     if (matches.length > 0) {
       autocompleteList.style.display = 'block';
       matches.forEach(match => {
         const li = document.createElement('li'); li.className = 'autocomplete-item';
-        li.innerHTML = isOnlyChosung ? match.name : match.name.replace(query, `<span style="color:#007bff;font-weight:bold;">${query}</span>`);
-        li.onclick = () => { searchInput.value = match.name; autocompleteList.style.display = 'none'; fetchAndShowPokemon(match.id, match.name); };
+        li.innerHTML = isOnlyChosung ? match.name : match.name.replace(query, `<span style="color:#4CAF50;font-weight:bold;">${query}</span>`);
+
+        li.onclick = () => {
+          searchInput.value = match.name;
+          autocompleteList.style.display = 'none';
+          // 💡 클릭하면 바로 추가하지 않고 [프리뷰]를 띄웁니다 (구버전 방식)
+          fetchAndShowPokemon(match.id, match.name);
+        };
         autocompleteList.appendChild(li);
       });
     } else { autocompleteList.style.display = 'none'; }
   });
 
-  // 🌟 새 기능: 키보드 방향키 및 엔터 지원 로직
   searchInput.addEventListener('keydown', function(e) {
+    if (e.isComposing || e.keyCode === 229) return;
     let items = autocompleteList.getElementsByTagName('li');
     if (autocompleteList.style.display === 'none' || items.length === 0) return;
 
-    if (e.key === 'ArrowDown') {
-      currentFocus++;
-      addActive(items);
-    } else if (e.key === 'ArrowUp') {
-      currentFocus--;
-      addActive(items);
-    } else if (e.key === 'Enter') {
-      e.preventDefault(); // 엔터 시 폼 제출 등 기본 동작 방지
-      if (currentFocus > -1) {
-        if (items[currentFocus]) items[currentFocus].click();
-      } else if (items.length > 0) {
-        items[0].click(); // 선택 안 하고 엔터 치면 무조건 첫 번째 항목 클릭
-      }
+    if (e.key === 'ArrowDown') { e.preventDefault(); currentFocus++; addActive(items); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); currentFocus--; addActive(items); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      // 엔터를 치면 프리뷰를 띄움
+      if (currentFocus > -1 && items[currentFocus]) items[currentFocus].click();
+      else if (items.length > 0) items[0].click();
     }
   });
 
-  function addActive(items) {
-    if (!items) return false;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = (items.length - 1);
+  function addActive(items) { removeActive(items); if (currentFocus >= items.length) currentFocus = 0; if (currentFocus < 0) currentFocus = (items.length - 1); items[currentFocus].classList.add('active'); items[currentFocus].scrollIntoView({ block: 'nearest' }); }
+  function removeActive(items) { for (let i = 0; i < items.length; i++) items[i].classList.remove('active'); }
 
-    items[currentFocus].classList.add('active');
-
-    // 방향키 이동 시 스크롤 자동 추적
-    items[currentFocus].scrollIntoView({ block: 'nearest' });
-  }
-
-  function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-      items[i].classList.remove('active');
-    }
-  }
-
+  // 구버전 로직: 캔버스 아래에 미리보기를 띄워줍니다.
   async function fetchAndShowPokemon(id, koreanName) {
     const searchResults = document.getElementById('searchResults');
     searchResults.innerHTML = '<div class="loading-text">포켓몬 이미지를 불러오는 중입니다...</div>';
@@ -400,14 +707,14 @@
       const heightCm = data.height * 10;
       const imageUrl = data.sprites.other['official-artwork'].front_default;
 
+      // 썸네일을 클릭해야만 캔버스에 추가됨
       searchResults.innerHTML = `
         <div class="result-item" onclick="addPokemonToMain('${koreanName}', ${heightCm}, '${imageUrl}')">
-            <!-- 🌟 수정됨: crossorigin="anonymous" 속성 추가 -->
             <img src="${imageUrl}" alt="${koreanName}" class="result-img" crossorigin="anonymous">
             <div class="result-info"><div class="result-name">${koreanName}</div><div class="result-height">설정 키: ${heightCm}cm</div></div>
         </div>
       `;
-    } catch (error) { searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지를 불러오지 못했습니다.</div>'; }
+    } catch (error) { searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지 로드 실패</div>'; }
   }
 
   function addPokemonToMain(name, heightCm, imgUrl) {
@@ -416,12 +723,11 @@
     const targetPixelHeight = heightCm * 3.5;
 
     trimTransparentPixels(imgUrl, function(trimmedImgUrl) {
-      // 🌟 수정됨: 세 번째 파라미터로 { crossOrigin: 'anonymous' } 옵션 추가
       fabric.Image.fromURL(trimmedImgUrl, function(img) {
         if (!img) return;
         const scale = targetPixelHeight / img.height;
         img.set({
-          id: objId,
+          id: objId, customName: name, imgUrl: trimmedImgUrl,
           left: (canvas.width / 2) - ((img.width * scale) / 2),
           top: (canvas.height / 2) - ((img.height * scale) / 2),
           scaleX: scale, scaleY: scale,
@@ -429,47 +735,87 @@
           objectCaching: false
         });
 
+        // Hard Outline 싱크 초기화
+        img.outlineBg = null;
+        img.outlineMode = null;
+
         canvas.add(img);
         canvas.setActiveObject(img);
+        autoFitObject(img.height * scale);
 
-        addPokemonToSidebar(name, trimmedImgUrl, objId);
-        addLayerToSidebar(name, objId);
-      }, { crossOrigin: 'anonymous' }); // 👈 바로 이 부분!
+        addLayerItemToDOM(name, trimmedImgUrl, objId);
+        saveHistory();
+      }, { crossOrigin: 'anonymous' });
     });
   }
 
-  // UI 리스트, 드래그, 제거 등
-  function addPokemonToSidebar(name, imgUrl, objId) {
-    const list = document.getElementById('selected-pokemon-list');
-    const slot = document.createElement('div');
-    slot.className = 'poke-slot';
-    slot.dataset.id = objId;
-    slot.innerHTML = `
-        <img src="${imgUrl}" style="width:40px; height:40px; background:#fff; border-radius:5px; margin-right:10px; object-fit:contain;">
-        <div><div style="font-size:16px; font-weight:bold;">${name}</div></div>
-        <button class="remove-btn" onclick="removeObject('${objId}')">-</button>
-    `;
-    list.appendChild(slot);
-  }
-
-  function addLayerToSidebar(name, objId) {
+  // --- 레이어 관리 및 싱크 제어 (신버전) ---
+  function addLayerItemToDOM(name, imgUrl, objId) {
     const list = document.getElementById('layer-list');
-    const layer = document.createElement('div');
-    layer.className = 'layer-item';
-    layer.dataset.id = objId;
-    layer.draggable = true;
-    layer.innerHTML = `<span>≡</span> <span style="margin-left:10px;">${name}</span>`;
-    list.insertBefore(layer, list.firstChild);
-    addDragEventsToItem(layer);
+    const item = document.createElement('div');
+    item.className = 'layer-item';
+    item.dataset.id = objId;
+    item.draggable = true;
+
+    item.innerHTML = `
+        <span class="drag-handle">≡</span>
+        <img src="${imgUrl}" class="layer-img">
+        <span class="layer-name">${name}</span>
+        <button class="remove-btn" title="삭제" onclick="event.stopPropagation(); removeObject('${objId}')">✕</button>
+    `;
+
+    list.insertBefore(item, list.firstChild);
+
+    item.addEventListener('click', () => {
+      const obj = canvas.getObjects().find(o => o.id === objId && !o.isOutlineBg);
+      if(obj) {
+        canvas.setActiveObject(obj);
+        canvas.renderAll();
+        highlightLayer(obj);
+      }
+    });
+
+    item.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const obj = canvas.getObjects().find(o => o.id === objId && !o.isOutlineBg);
+      if(obj) {
+        obj.set('flipX', !obj.flipX);
+        canvas.renderAll();
+        saveHistory();
+      }
+    });
+
+    addDragEventsToItem(item);
   }
 
   function removeObject(objId) {
-    const objToRemove = canvas.getObjects().find(o => o.id === objId);
-    if (objToRemove) canvas.remove(objToRemove);
-    const slot = document.querySelector(`.poke-slot[data-id="${objId}"]`);
-    if (slot) slot.remove();
+    const objToRemove = canvas.getObjects().find(o => o.id === objId && !o.isOutlineBg);
+    if (objToRemove) {
+      // 🌟 Hard Outline 실루엣도 함께 삭제
+      if (objToRemove.outlineBg) canvas.remove(objToRemove.outlineBg);
+      canvas.remove(objToRemove);
+      saveHistory();
+    }
     const layer = document.querySelector(`.layer-item[data-id="${objId}"]`);
     if (layer) layer.remove();
+  }
+
+  function highlightLayer(activeObj) {
+    document.querySelectorAll('.layer-item').forEach(l => l.classList.remove('active-layer'));
+    if(activeObj && activeObj.id && !activeObj.isOutlineBg) {
+      const layer = document.querySelector(`.layer-item[data-id="${activeObj.id}"]`);
+      if(layer) layer.classList.add('active-layer');
+    }
+  }
+
+  function rebuildLayersFromCanvas() {
+    const list = document.getElementById('layer-list');
+    list.innerHTML = '';
+    const objects = canvas.getObjects();
+    // 🌟 실루엣은 레이어 목록에 표시하지 않음
+    objects.forEach(obj => {
+      if(obj.id && obj.customName && !obj.isOutlineBg) addLayerItemToDOM(obj.customName, obj.imgUrl, obj.id);
+    });
   }
 
   function setupLayerDragAndDrop() {
@@ -486,8 +832,12 @@
   }
 
   function addDragEventsToItem(item) {
-    item.addEventListener('dragstart', () => { item.classList.add('dragging'); });
-    item.addEventListener('dragend', () => { item.classList.remove('dragging'); syncLayersToCanvas(); });
+    item.addEventListener('dragstart', () => item.classList.add('dragging'));
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      syncLayersToCanvas();
+      saveHistory();
+    });
   }
 
   function getDragAfterElement(container, y) {
@@ -500,12 +850,18 @@
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   }
 
+  // 🌟 z-index 동기화 (Hard Outline 배경 고려)
   function syncLayersToCanvas() {
     const items = [...document.querySelectorAll('#layer-list .layer-item')].reverse();
     items.forEach((item, index) => {
       const objId = item.dataset.id;
-      const obj = canvas.getObjects().find(o => o.id === objId);
-      if (obj) obj.moveTo(index);
+      const obj = canvas.getObjects().find(o => o.id === objId && !o.isOutlineBg);
+      if (obj) {
+        // 메인 객체 이동
+        obj.moveTo(index);
+        // 🌟 실루엣 배경이 있다면 바로 메인 객체 뒤로 이동
+        if (obj.outlineBg) obj.outlineBg.moveTo(Math.max(0, canvas.getObjects().indexOf(obj) - 1));
+      }
     });
     canvas.renderAll();
   }
@@ -515,6 +871,7 @@
     canvas.renderAll();
     const link = document.createElement('a');
     link.download = '포켓몬_크기비교.png';
+    // 🌟 저장 화질 향상을 위해 multiplier 고정
     link.href = canvas.toDataURL({ format: 'png', multiplier: 2 });
     document.body.appendChild(link);
     link.click();
@@ -523,18 +880,16 @@
 
   function trimTransparentPixels(imgUrl, callback) {
     const img = new Image();
-    img.crossOrigin = 'anonymous'; // 🌟 필수: 외부 이미지 권한 요청
+    if (!imgUrl.startsWith('data:') && !imgUrl.startsWith('blob:')) img.crossOrigin = 'anonymous';
     img.onload = function() {
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = img.width; tempCanvas.height = img.height;
       const ctx = tempCanvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-
       try {
         const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
         const data = imageData.data;
         let top = null, bottom = null, left = null, right = null;
-
         for (let y = 0; y < tempCanvas.height; y++) {
           for (let x = 0; x < tempCanvas.width; x++) {
             if (data[(y * tempCanvas.width + x) * 4 + 3] > 0) {
@@ -545,7 +900,6 @@
             }
           }
         }
-
         if (top !== null) {
           const trimmedWidth = right - left + 1;
           const trimmedHeight = bottom - top + 1;
@@ -555,18 +909,11 @@
             tempCanvas, left, top, trimmedWidth, trimmedHeight, 0, 0, trimmedWidth, trimmedHeight
           );
           callback(trimmedCanvas.toDataURL('image/png'));
-        } else {
-          callback(imgUrl);
-        }
-      } catch (e) {
-        // 🌟 깃허브에서 보안 에러가 터져도 프로그램이 멈추지 않고 원본 이미지를 넘기도록 예외 처리
-        console.warn("여백 자르기 보안 에러 발생, 원본으로 대체합니다.", e);
-        callback(imgUrl);
-      }
+        } else callback(imgUrl);
+      } catch (e) { callback(imgUrl); }
     };
-
-    // 🌟 수정됨: 브라우저 캐시를 무시하고 무조건 새로 불러오게 만들어 CORS 충돌 방지
-    img.src = imgUrl + '?v=' + new Date().getTime();
+    if (imgUrl.startsWith('http')) img.src = imgUrl + '?v=' + new Date().getTime();
+    else img.src = imgUrl;
   }
 </script>
 </body>
