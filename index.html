@@ -7,7 +7,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
   <script src="https://kit.fontawesome.com/6f87584c9f.js" crossorigin="anonymous"></script>
   <style>
-    /* 기본 초기화 및 레이아웃 (신버전 유지) */
     body { margin: 0; padding: 0; display: flex; height: 100vh; background-color: #e5e5e5; font-family: 'Pretendard', sans-serif; overflow: hidden; }
 
     /* 네비게이션 탭 (아이콘 추가 & 3번 탭 삭제된 신버전) */
@@ -27,7 +26,7 @@
     .canvas-box { width: 100%; height: 100%; background-color: #ffffff; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
     /* 캔버스 왼쪽 툴바 (사이드바에 가려지는 신버전) */
-    .left-toolbar { position: absolute; left: -70px; top: 84%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 2; transition: opacity 0.2s; }
+    .left-toolbar { position: absolute; left: -70px; top: 82%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 2; transition: opacity 0.2s; }
     .toolbar-btn { width: 50px; height: 50px; border-radius: 10px; background: white; border: 1px solid #ddd; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; flex-direction: column; color: #333; transition: 0.2s; }
     .toolbar-btn:hover { background: #f0f0f0; transform: scale(1.05); }
     .toolbar-btn:active { transform: scale(0.95); }
@@ -170,6 +169,9 @@
     <h3 style="border:none; margin:0; font-size:22px;">포켓몬 검색</h3>
     <div class="search-container">
       <input type="text" class="search-bar" id="searchInput" placeholder="이름 또는 초성 입력 후 엔터 (예: ㅍ, 피카츄)">
+      <label style="display:inline-block; margin-top:10px; font-size:14px; font-weight:bold; cursor:pointer; color:#555;">
+        <input type="checkbox" id="shiny-toggle" style="cursor:pointer;"> ✨ 이로치(Shiny)로 불러오기
+      </label>
       <ul id="autocompleteList" class="autocomplete-list"></ul>
     </div>
     <div class="search-results" id="searchResults">
@@ -464,7 +466,7 @@
   }
   initDictionary();
 
-  // --- 🌟 구버전(프리뷰가 있는) 검색 로직 복구 ---
+  // --- 검색 로직 ---
   const searchInput = document.getElementById('searchInput');
   const autocompleteList = document.getElementById('autocompleteList');
   let currentFocus = -1;
@@ -487,7 +489,6 @@
         li.onclick = () => {
           searchInput.value = match.name;
           autocompleteList.style.display = 'none';
-          // 💡 클릭하면 바로 추가하지 않고 [프리뷰]를 띄웁니다 (구버전 방식)
           fetchAndShowPokemon(match.id, match.name);
         };
         autocompleteList.appendChild(li);
@@ -504,7 +505,6 @@
     else if (e.key === 'ArrowUp') { e.preventDefault(); currentFocus--; addActive(items); }
     else if (e.key === 'Enter') {
       e.preventDefault();
-      // 엔터를 치면 프리뷰를 띄움
       if (currentFocus > -1 && items[currentFocus]) items[currentFocus].click();
       else if (items.length > 0) items[0].click();
     }
@@ -513,7 +513,7 @@
   function addActive(items) { removeActive(items); if (currentFocus >= items.length) currentFocus = 0; if (currentFocus < 0) currentFocus = (items.length - 1); items[currentFocus].classList.add('active'); items[currentFocus].scrollIntoView({ block: 'nearest' }); }
   function removeActive(items) { for (let i = 0; i < items.length; i++) items[i].classList.remove('active'); }
 
-  // 구버전 로직: 캔버스 아래에 미리보기를 띄워줍니다.
+  // 검색 결과 출력 함수
   async function fetchAndShowPokemon(id, koreanName) {
     const searchResults = document.getElementById('searchResults');
     searchResults.innerHTML = '<div class="loading-text">포켓몬 이미지를 불러오는 중입니다...</div>';
@@ -521,16 +521,29 @@
       const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
       const data = await res.json();
       const heightCm = data.height * 10;
-      const imageUrl = data.sprites.other['official-artwork'].front_default;
+      const isShiny = document.getElementById('shiny-toggle').checked;
 
-      // 썸네일을 클릭해야만 캔버스에 추가됨
+      let imageUrl = isShiny
+        ? data.sprites.other['official-artwork'].front_shiny
+        : data.sprites.other['official-artwork'].front_default;
+      if (!imageUrl && isShiny) {
+        imageUrl = data.sprites.front_shiny || data.sprites.other['official-artwork'].front_default;
+      }
+
+      const displayName = isShiny ? `✨ ${koreanName}` : koreanName;
+
       searchResults.innerHTML = `
-        <div class="result-item" onclick="addPokemonToMain('${koreanName}', ${heightCm}, '${imageUrl}')">
-            <img src="${imageUrl}" alt="${koreanName}" class="result-img" crossorigin="anonymous">
-            <div class="result-info"><div class="result-name">${koreanName}</div><div class="result-height">설정 키: ${heightCm}cm</div></div>
+        <div class="result-item" onclick="addPokemonToMain('${displayName}', ${heightCm}, '${imageUrl}')">
+            <img src="${imageUrl}" alt="${displayName}" class="result-img" crossorigin="anonymous">
+            <div class="result-info">
+              <div class="result-name" style="color: ${isShiny ? '#d4af37' : '#000'}">${displayName}</div>
+              <div class="result-height">설정 키: ${heightCm}cm</div>
+            </div>
         </div>
       `;
-    } catch (error) { searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지 로드 실패</div>'; }
+    } catch (error) {
+      searchResults.innerHTML = '<div class="loading-text" style="color:red;">이미지 로드 실패</div>';
+    }
   }
 
   function addPokemonToMain(name, heightCm, imgUrl) {
@@ -550,8 +563,6 @@
           transparentCorners: false, cornerColor: '#555', cornerSize: 10,
           objectCaching: false
         });
-
-        // Hard Outline 싱크 초기화
         img.outlineBg = null;
         img.outlineMode = null;
 
@@ -678,7 +689,6 @@
   function removeObject(objId) {
     const objToRemove = canvas.getObjects().find(o => o.id === objId);
     if (objToRemove) {
-      // 버그 시절 남아있던 투명 클론 강제 청소
       if (objToRemove.outlineBg) canvas.remove(objToRemove.outlineBg);
       canvas.remove(objToRemove);
       saveHistory();
@@ -693,7 +703,7 @@
       const objId = item.dataset.id;
       const obj = canvas.getObjects().find(o => o.id === objId);
       if (obj) {
-        obj.moveTo(index); // 클론 로직이 빠져서 번호가 꼬이지 않고 완벽하게 동기화됨
+        obj.moveTo(index);
       }
     });
     canvas.renderAll();
@@ -704,7 +714,6 @@
     canvas.renderAll();
     const link = document.createElement('a');
     link.download = '포켓몬_크기비교.png';
-    // 🌟 저장 화질 향상을 위해 multiplier 고정
     link.href = canvas.toDataURL({ format: 'png', multiplier: 2 });
     document.body.appendChild(link);
     link.click();
@@ -749,21 +758,18 @@
     else img.src = imgUrl;
   }
 
-  // --- 🌟 새 기능: 키보드 단축키 (Ctrl+Z, Ctrl+Y) 지원 ---
+  // --- 키보드 단축키 (Ctrl+Z, Ctrl+Y) 지원 ---
   window.addEventListener('keydown', function(e) {
-    // 검색창이나 이름 입력창 등에서 글씨를 타이핑 중일 때는 단축키 작동 방지
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
       return;
     }
-
-    // Ctrl 키(윈도우) 또는 Cmd 키(맥)가 눌려있는지 확인
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'z' || e.key === 'Z') {
-        e.preventDefault(); // 브라우저의 기본 뒤로가기 동작을 막음
-        undo();             // 내가 만든 되돌리기 함수 실행
+        e.preventDefault();
+        undo();
       } else if (e.key === 'y' || e.key === 'Y') {
         e.preventDefault();
-        redo();             // 내가 만든 다시 실행 함수 실행
+        redo();
       }
     }
   });
