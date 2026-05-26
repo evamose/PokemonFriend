@@ -426,7 +426,6 @@
 
   let pokemonDict = [];
 
-  // 리전폼 지원 최적화 사전 초기화
   async function initDictionary() {
     try {
       const res = await fetch('https://beta.pokeapi.co/graphql/v1beta', {
@@ -434,35 +433,62 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `query {
-            pokemon_v2_pokemon { id name is_default pokemon_species_id }
-            pokemon_v2_pokemonspeciesname(where: {language_id: {_eq: 3}}) { pokemon_species_id name }
+            pokemon_v2_pokemon(limit: 15000) { id name is_default pokemon_species_id }
+            pokemon_v2_pokemonspeciesname(where: {language_id: {_eq: 3}}, limit: 2000) { pokemon_species_id name }
           }`
         })
       });
       const data = await res.json();
 
-      if (!data.data) { document.getElementById('dictLoadingMsg').innerText = "로딩 실패!"; return; }
+      if (!data.data) {
+        document.getElementById('dictLoadingMsg').innerText = "로딩 실패!";
+        return;
+      }
 
       const speciesNameMap = {};
-      data.data.pokemon_v2_pokemonspeciesname.forEach(s => speciesNameMap[s.pokemon_species_id] = s.name);
+      data.data.pokemon_v2_pokemonspeciesname.forEach(s => {
+        speciesNameMap[s.pokemon_species_id] = s.name;
+      });
 
       data.data.pokemon_v2_pokemon.forEach(p => {
-        let krName = speciesNameMap[p.pokemon_species_id];
-        if (!krName) return;
+        const baseName = speciesNameMap[p.pokemon_species_id];
+        if (!baseName) return;
+
+        let krName = baseName;
         const engName = p.name;
-        if (!p.is_default) {
+
+        if (engName.includes('-female') || engName.endsWith('-f')) {
+          krName += ' (암컷)';
+        }
+        // 지역폼 및 기타 폼체인지 처리
+        else if (!p.is_default) {
           if (engName.includes('-alola')) krName += ' (알로라)';
           else if (engName.includes('-galar')) krName += ' (가라르)';
           else if (engName.includes('-hisui')) krName += ' (히스이)';
           else if (engName.includes('-paldea')) krName += ' (팔데아)';
           else if (engName.includes('-mega')) krName += ' (메가진화)';
           else if (engName.includes('-gmax')) krName += ' (거다이맥스)';
+          else if (engName.includes('-east')) krName += ' (동해의 모습)';
+          else if (engName.includes('-blue')) krName += ' (청색근의 모습)';
+          else if (engName.includes('-white')) krName += ' (백색근의 모습)';
+          else if (engName.includes('-unbound')) krName += ' (굴레를 벗어난 모습)';
+          else if (engName.includes('-origin')) krName += ' (오리진폼)';
+          else if (engName.includes('-sky')) krName += ' (스카이폼)';
+          else if (engName.includes('-therian')) krName += ' (영물폼)';
           else return;
         }
-        pokemonDict.push({ id: p.id, name: krName, chosung: getChoSung(krName) });
+
+        pokemonDict.push({
+          id: p.id,
+          name: krName,
+          chosung: getChoSung(krName)
+        });
       });
+
       document.getElementById('dictLoadingMsg').style.display = 'none';
-    } catch (error) { console.error(error); }
+    } catch (error) {
+      console.error(error);
+    }
   }
   initDictionary();
 
